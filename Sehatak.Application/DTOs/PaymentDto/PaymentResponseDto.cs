@@ -10,6 +10,7 @@ namespace Sehatak.Application.DTOs.PaymentDto
     {
         public int Id { get; set; }
         public int patientId {  get; set; }
+        public string PatientName { get; set; }
         public string? ReferenceNumber { get; set; }
         public string? ReceiptImageUrl { get; set; }
         public DateTime PaidAt { get; set; } = DateTime.UtcNow;

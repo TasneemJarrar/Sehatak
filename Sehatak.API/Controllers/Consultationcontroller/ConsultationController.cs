@@ -30,37 +30,37 @@ namespace Sehatak.API.Controllers.Consultationcontroller
 
         [Authorize(Policy = "PatientOnly")]
         [HttpPost("patient-request/{centerId}/{doctorId}")]
-        public async Task<IActionResult> RequestConsultation(int centerId, int doctorId)
+        public async Task<IActionResult> RequestConsultation(int centerId, int doctorId,int? subPatientId)
         {
             var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
-            var result = await consultation.ConsultationRequest(centerId, doctorId, userId);
+            var result = await consultation.ConsultationRequest(centerId, doctorId, userId, subPatientId);
             return Ok(result);
         }
 
         [Authorize(Policy = "PatientOnly")]
         [HttpGet("patient-get-consultation/{centerId}/{doctorId}/{consultationId}")]
-        public async Task<IActionResult> GetConsultation(int centerId, int doctorId, int consultationId)
+        public async Task<IActionResult> GetConsultation(int centerId, int doctorId, int consultationId,int? subPatientId)
         {
             var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
-            var result = await consultation.ViewConsultation(centerId, doctorId, userId, consultationId);
+            var result = await consultation.ViewConsultation(centerId, doctorId, userId, consultationId, subPatientId);
             return Ok(result);
         }
 
         [Authorize(Policy = "PatientOnly")]
-        [HttpPost("patient-get-patient-consultation/{centerId}")]
-        public async Task<IActionResult> GetConsultations(int centerId, [FromBody] ConsultationStatus status, [FromQuery] PagedRequest request)
+        [HttpGet("patient-get-consultation/{centerId}")]
+        public async Task<IActionResult> GetConsultations(int centerId, [FromQuery] ConsultationStatus status, [FromQuery] PagedRequest request,int? subPatientId)
         {
             var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
-            var result = await consultation.ViewConsultations(centerId, userId, status,request);
+            var result = await consultation.ViewConsultations(centerId, userId, status,request, subPatientId);
             return Ok(result);
         }
 
         [Authorize(Policy = "PatientOnly")]
         [HttpPost("patient-record-payment/{centerId}/{consultationId}")]
-        public async Task<IActionResult> ConsultationRecordPaymentAsync(int centerId, int consultationId, [FromBody] PaymentRequestDto request)
+        public async Task<IActionResult> ConsultationRecordPaymentAsync(int centerId, int consultationId, [FromBody] PaymentRequestDto request,int? subPatientId)
         {
             var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
-            var result = await consultation.ConsultationRecordPayment(centerId, consultationId, userId, request);
+            var result = await consultation.ConsultationRecordPayment(centerId, consultationId, userId, request, subPatientId);
             return Ok(result);
         }
 
@@ -112,10 +112,10 @@ namespace Sehatak.API.Controllers.Consultationcontroller
 
         [Authorize(Policy = "PatientOnly")]
         [HttpPut("patient-cancel/{centerId}/{consultationId}")]
-        public async Task<IActionResult> CancelConsultationAsync(int centerId , int consultationId)
+        public async Task<IActionResult> CancelConsultationAsync(int centerId , int consultationId,int? subPatientId)
         {
             var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
-            var result = await consultation.CancelConsultaion(centerId, userId, consultationId);
+            var result = await consultation.CancelConsultaion(centerId, userId, consultationId, subPatientId);
             return Ok(result);
         }
 

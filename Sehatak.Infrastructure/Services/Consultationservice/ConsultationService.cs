@@ -1,4 +1,5 @@
-﻿using DocumentFormat.OpenXml.Wordprocessing;
+﻿using DocumentFormat.OpenXml.Office2016.Excel;
+using DocumentFormat.OpenXml.Wordprocessing;
 using Microsoft.EntityFrameworkCore;
 using Sehatak.Application.Common;
 using Sehatak.Application.DTOs.ConsultationDto;
@@ -23,7 +24,7 @@ namespace Sehatak.Infrastructure.Services.Consultationservice
             this.contextFactory = contextFactory;
         }
 
-        public async Task<string> CancelConsultaion(int centerId, int userId, int consultationId)
+        public async Task<string> CancelConsultaion(int centerId, int userId, int consultationId,int? subPatientId)
         {
             var center = await sharedDbContext.MedicalCenters
                 .FirstOrDefaultAsync(c => c.Id == centerId
@@ -42,11 +43,25 @@ namespace Sehatak.Infrastructure.Services.Consultationservice
             if (patient == null)
                 throw new BusinessException("Patient.NotFound");
 
+            Patient actingPatient = patient;
+
+            if (subPatientId.HasValue)
+            {
+                var subPatient = await db.Patients
+                    .FirstOrDefaultAsync(s => s.patientId == subPatientId.Value
+                                         && s.ParentPatientId == patient.patientId);
+
+                if (subPatient == null)
+                    throw new BusinessException("SubPatient.NotFoundOrNotOwned");
+
+                actingPatient = subPatient;
+            }
+
             var consultation = await db.Consultations
                 .Include(d=>d.Doctor)
                 .ThenInclude(u=>u.user)
                 .FirstOrDefaultAsync(c => c.Id == consultationId
-                                     && c.PatientId == patient.patientId);
+                                     && c.PatientId == actingPatient.patientId);
 
             if (consultation == null)
                 throw new BusinessException("Consultation.NotFound");
@@ -65,7 +80,7 @@ namespace Sehatak.Infrastructure.Services.Consultationservice
 
             db.Notifications.Add(new Notification
             {
-                UserId = consultation.Doctor.user.Id,
+                UserId = patient.userId!.Value,
                 Message = "قام المريض بإلغاء طلب الاستشارة.",
                 Type = NotificationType.Cancellation,
                 IsRead = false,
@@ -112,7 +127,7 @@ namespace Sehatak.Infrastructure.Services.Consultationservice
 
             db.Notifications.Add(new Notification
             {
-                UserId = (int)consultation.Patient.userId,
+                UserId = consultation.Patient.NotifiableUserId,
                 IsRead = false,
                 CreatedAt = DateTime.UtcNow,
                 Message = "تم انهاء استشارتك , يمكنك مراجعة ملفك الطبي لمتابعة التفاصيل.",
@@ -174,7 +189,7 @@ namespace Sehatak.Infrastructure.Services.Consultationservice
 
             await db.Notifications.AddAsync( new Notification
             {
-                UserId = (int)patient.userId,
+                UserId = patient.NotifiableUserId,
                 Type = NotificationType.Appointment,
                 IsRead = false,
                 CreatedAt=DateTime.UtcNow,
@@ -187,7 +202,7 @@ namespace Sehatak.Infrastructure.Services.Consultationservice
 
         }
 
-        public async Task<string> ConsultationRecordPayment(int centerId, int consultationId, int userId , PaymentRequestDto request)
+        public async Task<string> ConsultationRecordPayment(int centerId, int consultationId, int userId , PaymentRequestDto request,int? subPatientId)
         {
             var center = await sharedDbContext.MedicalCenters
                 .FirstOrDefaultAsync(c => c.Id == centerId
@@ -205,10 +220,24 @@ namespace Sehatak.Infrastructure.Services.Consultationservice
             if (patient == null)
                 throw new BusinessException("Patient.NotFound");
 
+            Patient actingPatient = patient;
+
+            if (subPatientId.HasValue)
+            {
+                var subPatient = await db.Patients
+                    .FirstOrDefaultAsync(s => s.patientId == subPatientId.Value
+                                         && s.ParentPatientId == patient.patientId);
+
+                if (subPatient == null)
+                    throw new BusinessException("SubPatient.NotFoundOrNotOwned");
+
+                actingPatient = subPatient;
+            }
+
             var consultaion = await db.Consultations
                 .Include(p=>p.Patient)
                 .FirstOrDefaultAsync(c => c.Id == consultationId
-                                     && c.PatientId == patient.patientId
+                                     && c.PatientId == actingPatient.patientId
                                      && c.Status == ConsultationStatus.Pending);
 
             if (consultaion == null)
@@ -251,7 +280,7 @@ namespace Sehatak.Infrastructure.Services.Consultationservice
             }
             var payment = new Payment
             {
-                PatientId = patient.patientId,
+                PatientId = actingPatient.patientId,
                 ConsultationId = consultationId,
                 ReceiptImageUrl = receiptImageUrl,
                 Amount = servicePrice.Price,
@@ -270,7 +299,7 @@ namespace Sehatak.Infrastructure.Services.Consultationservice
 
         }
 
-        public async Task<string> ConsultationRequest(int centerId, int doctorId, int userId)
+        public async Task<string> ConsultationRequest(int centerId, int doctorId, int userId,int? subPatientId)
         {
             var center = await sharedDbContext.MedicalCenters
                  .FirstOrDefaultAsync(c => c.Id == centerId
@@ -298,9 +327,23 @@ namespace Sehatak.Infrastructure.Services.Consultationservice
             if (patient == null)
                 throw new BusinessException("Patient.NotFound");
 
+            Patient actingPatient = patient;
+
+            if (subPatientId.HasValue)
+            {
+                var subPatient = await db.Patients
+                    .FirstOrDefaultAsync(s => s.patientId == subPatientId.Value
+                                         && s.ParentPatientId == patient.patientId);
+
+                if (subPatient == null)
+                    throw new BusinessException("SubPatient.NotFoundOrNotOwned");
+
+                actingPatient = subPatient;
+            }
+
             var hasPendingRequest = await db.Consultations
                .AnyAsync(c => c.DoctorId == doctorId
-                         && c.PatientId == patient.patientId
+                         && c.PatientId == actingPatient.patientId
                          && c.Status == ConsultationStatus.Pending);
 
             if (hasPendingRequest)
@@ -310,14 +353,14 @@ namespace Sehatak.Infrastructure.Services.Consultationservice
                 .AddAsync(new Consultation
                 {
                     DoctorId = doctor.Id,
-                    PatientId = patient.patientId,
+                    PatientId = actingPatient.patientId,
                     Status = ConsultationStatus.Pending,
 
                 });
             await db.Notifications
                 .AddAsync(new Notification
                 {
-                    UserId = (int)patient.userId,
+                    UserId = patient.userId!.Value,
                     Message = "تم ارسال طلب الاستشارة الى الطبيب , سيصلك الموعد من قبل الطبيب عند الموافقة على الطلب" ,
                     IsRead = false,
                     CreatedAt = DateTime.UtcNow,
@@ -356,7 +399,9 @@ namespace Sehatak.Infrastructure.Services.Consultationservice
                     patientId = n.PatientId,
                     VideoLink = n.VideoLink,
                     ConsultationId = n.Id,
-                    patientName = $"{n.Patient.user.firstName} {n.Patient.user.lastName}",
+                    patientName = n.Patient.userId != null
+                    ? n.Patient.user.firstName + " " + n.Patient.user.lastName
+                    : n.Patient.FirstName + " " + n.Patient.LastName,
                     SchedualeDate = n.ScheduledAt 
                 });
 
@@ -416,6 +461,9 @@ namespace Sehatak.Infrastructure.Services.Consultationservice
                 {
                     Id = n.Id,
                     patientId = n.PatientId,
+                    PatientName = n.Patient.userId != null
+                    ? n.Patient.user.firstName + " " + n.Patient.user.lastName
+                    : n.Patient.FirstName + " " + n.Patient.LastName,
                     PaidAt = n.PaidAt,
                     ReceiptImageUrl = n.ReceiptImageUrl,
                     ReferenceNumber = n.ReferenceNumber
@@ -510,7 +558,7 @@ namespace Sehatak.Infrastructure.Services.Consultationservice
 
             await db.Notifications.AddAsync(new Notification
             {
-                UserId = (int)payment.Patient.userId,
+                UserId = payment.Patient.NotifiableUserId,
                 Type = NotificationType.Appointment,
                 IsRead = false,
                 CreatedAt = DateTime.UtcNow,
@@ -555,7 +603,7 @@ namespace Sehatak.Infrastructure.Services.Consultationservice
 
             await db.Notifications.AddAsync(new Notification
             {
-                UserId = (int)consultation.Patient.userId,
+                UserId = consultation.Patient.NotifiableUserId,
                 Type = NotificationType.Appointment,
                 IsRead = false,
                 CreatedAt = DateTime.UtcNow,
@@ -567,7 +615,7 @@ namespace Sehatak.Infrastructure.Services.Consultationservice
 
         }
 
-        public async Task<ConsultationResponse?> ViewConsultation(int centerId, int doctorId, int userId, int consultationId)
+        public async Task<ConsultationResponse?> ViewConsultation(int centerId, int doctorId, int userId, int consultationId,int? subPatientId)
         {
             var center = await sharedDbContext.MedicalCenters
                 .FirstOrDefaultAsync(c => c.Id == centerId
@@ -594,9 +642,23 @@ namespace Sehatak.Infrastructure.Services.Consultationservice
             if (patient == null)
                 throw new BusinessException("Patient.NotFound");
 
+            Patient actingPatient = patient;
+
+            if (subPatientId.HasValue)
+            {
+                var subPatient = await db.Patients
+                    .FirstOrDefaultAsync(s => s.patientId == subPatientId.Value
+                                         && s.ParentPatientId == patient.patientId);
+
+                if (subPatient == null)
+                    throw new BusinessException("SubPatient.NotFoundOrNotOwned");
+
+                actingPatient = subPatient;
+            }
+
             return await db.Consultations
                 .Where(c => c.DoctorId == doctor.Id
-                                     && c.PatientId == patient.patientId
+                                     && c.PatientId == actingPatient.patientId
                                      && c.Id == consultationId)
                 .Select(p => new ConsultationResponse
                 {
@@ -610,7 +672,7 @@ namespace Sehatak.Infrastructure.Services.Consultationservice
 
         }
 
-        public async Task<PagedResult<ConsultationResponse>> ViewConsultations(int centerId, int userId ,  ConsultationStatus status, PagedRequest request)
+        public async Task<PagedResult<ConsultationResponse>> ViewConsultations(int centerId, int userId ,  ConsultationStatus status, PagedRequest request,int? subPatientId)
         {
             var center = await sharedDbContext.MedicalCenters
                 .FirstOrDefaultAsync(c => c.Id == centerId
@@ -629,8 +691,22 @@ namespace Sehatak.Infrastructure.Services.Consultationservice
             if (patient == null)
                 throw new BusinessException("Patient.NotFound");
 
+            Patient actingPatient = patient;
+
+            if (subPatientId.HasValue)
+            {
+                var subPatient = await db.Patients
+                    .FirstOrDefaultAsync(s => s.patientId == subPatientId.Value
+                                         && s.ParentPatientId == patient.patientId);
+
+                if (subPatient == null)
+                    throw new BusinessException("SubPatient.NotFoundOrNotOwned");
+
+                actingPatient = subPatient;
+            }
+
             var query =  db.Consultations
-                .Where(c => c.PatientId == patient.patientId
+                .Where(c => c.PatientId == actingPatient.patientId
                        && c.Status == status)
                 .OrderByDescending(c=>c.ScheduledAt)
                 .Select(p => new ConsultationResponse
