@@ -20,7 +20,7 @@ namespace Sehatak.Infrastructure.Services.DoctorRatingService
             this.sharedDbContext = sharedDbContext;
             this.contextFactory = contextFactory;
         }
-        public async Task<DoctorRatingResponse> AddDoctorRatingAsync(int centerId, int userId, AddDoctorRatingRequest request)
+        public async Task<DoctorRatingResponse> AddDoctorRatingAsync(int centerId, int userId, AddDoctorRatingRequest request,int? subPatientId)
         {
             var center = await sharedDbContext.MedicalCenters
                 .FirstOrDefaultAsync(c => c.Id == centerId
@@ -39,10 +39,24 @@ namespace Sehatak.Infrastructure.Services.DoctorRatingService
             if (patient == null)
                 throw new BusinessException("Patient.NotFound");
 
+            Patient actingPatient = patient;
+
+            if (subPatientId.HasValue)
+            {
+                var subPatient = await db.Patients
+                    .FirstOrDefaultAsync(s => s.patientId == subPatientId.Value
+                                         && s.ParentPatientId == patient.patientId);
+
+                if (subPatient == null)
+                    throw new BusinessException("SubPatient.NotFoundOrNotOwned");
+
+                actingPatient = subPatient;
+            }
+
             var appointment = await db.Appointments
                 .Include(a => a.Rating)
                 .FirstOrDefaultAsync(a => a.Id == request.AppointmentId 
-                                    && a.patientId == patient.patientId);
+                                    && a.patientId == actingPatient.patientId);
 
             if (appointment == null)
                 throw new BusinessException("Appointment.NotFound");
@@ -56,7 +70,7 @@ namespace Sehatak.Infrastructure.Services.DoctorRatingService
             var rating = new DoctorRating
             {
                 DoctorId = appointment.doctorId,
-                PatientId = patient.patientId,
+                PatientId = actingPatient.patientId,
                 AppointmentId = appointment.Id,
                 Rating = request.Rating,
                 Review = request.Review,
@@ -71,8 +85,10 @@ namespace Sehatak.Infrastructure.Services.DoctorRatingService
             return new DoctorRatingResponse
             {
                 Id = rating.Id,
-                PatientId = patient.patientId,
-                PatientName = $"{patient.user.firstName} {patient.user.lastName}",
+                PatientId = actingPatient.patientId,
+                PatientName = actingPatient.userId != null
+                ? actingPatient.user.firstName + " " + actingPatient.user.lastName
+                : actingPatient.FirstName + " " + actingPatient.LastName,
                 AppointmentId = rating.AppointmentId,
                 DoctorId = rating.DoctorId,
                 CreatedAt = rating.CreatedAt,
@@ -113,7 +129,9 @@ namespace Sehatak.Infrastructure.Services.DoctorRatingService
                 PatientRatings = ratings.Select(p => new PatientSummaryRating
                 {
                     patientId = p.PatientId,
-                    patientName = $"{p.Patient.user.firstName} {p.Patient.user.lastName}",
+                    patientName = p.Patient.userId != null
+                    ? $"{p.Patient.user.firstName} {p.Patient.user.lastName}"
+                    : $"{p.Patient.FirstName} {p.Patient.LastName}",
                     AppointmentId = p.AppointmentId,
                     Rating = p.Rating,
                     Review = p.Review
@@ -122,7 +140,7 @@ namespace Sehatak.Infrastructure.Services.DoctorRatingService
 
         }
 
-        public async Task<Application.Common.PagedResult<GetMyRatingsResponse>> PatientGetRatingsAsync(int centerId,int userId, PagedRequest request)
+        public async Task<Application.Common.PagedResult<GetMyRatingsResponse>> PatientGetRatingsAsync(int centerId,int userId, PagedRequest request,int? subPatientId)
         {
             var center = await sharedDbContext.MedicalCenters
                 .FirstOrDefaultAsync(c => c.Id == centerId
@@ -141,9 +159,23 @@ namespace Sehatak.Infrastructure.Services.DoctorRatingService
             if (patient == null)
                 throw new BusinessException("Patient.NotFound");
 
+            Patient actingPatient = patient;
+
+            if (subPatientId.HasValue)
+            {
+                var subPatient = await db.Patients
+                    .FirstOrDefaultAsync(s => s.patientId == subPatientId.Value
+                                         && s.ParentPatientId == patient.patientId);
+
+                if (subPatient == null)
+                    throw new BusinessException("SubPatient.NotFoundOrNotOwned");
+
+                actingPatient = subPatient;
+            }
+
             var query = db.DoctorRatings
                 .Include(r=> r.Doctor)
-                .Where(r => r.PatientId == patient.patientId)
+                .Where(r => r.PatientId == actingPatient.patientId)
                 .OrderByDescending(r => r.CreatedAt)
                 .Select(r => new GetMyRatingsResponse
                 {
@@ -160,7 +192,7 @@ namespace Sehatak.Infrastructure.Services.DoctorRatingService
 
         }
 
-        public async Task<string> RemoveDoctorRatingAsync(int centerId, int userId, int ratingId)
+        public async Task<string> RemoveDoctorRatingAsync(int centerId, int userId, int ratingId,int? subPatientId)
         {
             var center = await sharedDbContext.MedicalCenters
                 .FirstOrDefaultAsync(c => c.Id == centerId
@@ -179,9 +211,23 @@ namespace Sehatak.Infrastructure.Services.DoctorRatingService
             if (patient == null)
                 throw new BusinessException("Patient.NotFound");
 
+                        Patient actingPatient = patient;
+
+            if (subPatientId.HasValue)
+            {
+                var subPatient = await db.Patients
+                    .FirstOrDefaultAsync(s => s.patientId == subPatientId.Value
+                                         && s.ParentPatientId == patient.patientId);
+
+                if (subPatient == null)
+                    throw new BusinessException("SubPatient.NotFoundOrNotOwned");
+
+                actingPatient = subPatient;
+            }
+
             var rating = await db.DoctorRatings
                 .FirstOrDefaultAsync(r => r.Id == ratingId
-                                     && r.PatientId == patient.patientId);
+                                     && r.PatientId == actingPatient.patientId);
 
             if (rating == null)
                 throw new BusinessException("Rating.NotFound");
@@ -191,7 +237,7 @@ namespace Sehatak.Infrastructure.Services.DoctorRatingService
             return "تم الحذف بنجاح";
         }
 
-        public async Task<DoctorRatingResponse> UpdateDoctorRatingAsync(int centerId, int userId, UpdateDoctorRatingRequest request)
+        public async Task<DoctorRatingResponse> UpdateDoctorRatingAsync(int centerId, int userId, UpdateDoctorRatingRequest request,int? subPatientId)
         {
             var center = await sharedDbContext.MedicalCenters
                 .FirstOrDefaultAsync(c => c.Id == centerId
@@ -210,9 +256,23 @@ namespace Sehatak.Infrastructure.Services.DoctorRatingService
             if (patient == null)
                 throw new BusinessException("Patient.NotFound");
 
+            Patient actingPatient = patient;
+
+            if (subPatientId.HasValue)
+            {
+                var subPatient = await db.Patients
+                    .FirstOrDefaultAsync(s => s.patientId == subPatientId.Value
+                                         && s.ParentPatientId == patient.patientId);
+
+                if (subPatient == null)
+                    throw new BusinessException("SubPatient.NotFoundOrNotOwned");
+
+                actingPatient = subPatient;
+            }
+
             var rating = await db.DoctorRatings
                 .FirstOrDefaultAsync(r => r.Id == request.RatingId
-                                     && r.PatientId == patient.patientId);
+                                     && r.PatientId == actingPatient.patientId);
 
             if (rating == null)
                 throw new BusinessException("Rating.NotFound");
@@ -230,7 +290,9 @@ namespace Sehatak.Infrastructure.Services.DoctorRatingService
             {
                 Id = rating.Id,
                 PatientId = rating.PatientId,
-                PatientName = $"{patient.user.firstName} {patient.user.lastName}",
+                PatientName = actingPatient.userId != null
+                ? actingPatient.user.firstName + " " + actingPatient.user.lastName
+                : actingPatient.FirstName + " " + actingPatient.LastName,
                 AppointmentId = rating.AppointmentId,
                 Rating = rating.Rating,
                 Review = rating.Review,
