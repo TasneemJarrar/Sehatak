@@ -17,6 +17,7 @@ namespace Sehatak.Domain.Entities.TenantEntities
         public DateOnly? AllowFollowUpDate { get; set; }
         public FollowUpStatus Status { get; set; } = FollowUpStatus.Pending;
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        public DateTime UpdatedAt { get; set; } 
         public int? ScheduledAppointmentId { get; set; }
         // Navigation Properties
         public Appointment OriginalAppointment { get; set; } = null!;

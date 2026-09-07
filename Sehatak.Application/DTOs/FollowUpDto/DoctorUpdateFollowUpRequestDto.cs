@@ -6,9 +6,10 @@ using System.Threading.Tasks;
 
 namespace Sehatak.Application.DTOs.FollowUpDto
 {
-    public class AddFollowUpRequestDto
+    public class DoctorUpdateFollowUpRequestDto
     {
-        public int OriginalAppointmentId { get; set; }
+        public int FollowUpId { get; set; }
+        public int PatientId { get; set; }
         public DateOnly? AllowFollowUpDate { get; set; }
     }
 }
