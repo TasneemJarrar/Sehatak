@@ -11,7 +11,10 @@ namespace Sehatak.Application.Interfaces.IFollowUp
     public interface IFollowUp
     {
         Task<FollowUpResponseDto> DoctorAddFollowUpAsync(int centerId , int userId ,DoctorAddFollowUpRequestDto request);
-        Task<FollowUpResponseDto> DoctorUpdateFollowUpAsync(int centerId , int userId , DoctorUpdateFollowUpRequestDto request);
+        Task<FollowUpResponseDto> DoctorUpdateFollowUpAsync(int centerId , int userId , UpdateFollowUpRequestDto request);
         Task<PagedResult<DoctorGetAllFollowUpResponse>> DoctorGetAllFollowUpAsync(int centerId , int userId,PagedRequest request);
+        Task<FollowUpResponseDto> ReceptionistAddFollowUpAsync(int centerId , int userId , ReceptionistAddFollowUpRequestDto request);
+        Task<FollowUpResponseDto> ReceptionistUpdateFollowUpAsync(int centerId , int userId , UpdateFollowUpRequestDto request);
+        Task<PagedResult<ReceptionistGetAllFollowUpResponse>> ReceptionistGetAllFollowUpAsync(int centerId , int userId,PagedRequest request);
     }
 }

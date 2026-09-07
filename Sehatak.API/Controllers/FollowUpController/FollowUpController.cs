@@ -29,7 +29,7 @@ namespace Sehatak.API.Controllers.FollowUpController
 
         [Authorize(Policy = "DoctorOnly")]
         [HttpPost("doctor-update-followup/{centerId}")]
-        public async Task<IActionResult> DoctorUpdateFollowUpAsync(int centerId, [FromBody] DoctorUpdateFollowUpRequestDto request)
+        public async Task<IActionResult> DoctorUpdateFollowUpAsync(int centerId, [FromBody] UpdateFollowUpRequestDto request)
         {
             var userId = int.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)!.Value);
             var result = await followUpService.DoctorUpdateFollowUpAsync(centerId, userId, request);
@@ -45,6 +45,31 @@ namespace Sehatak.API.Controllers.FollowUpController
             return Ok(result);
         }
 
+        [Authorize(Policy = "ReceptionistOnly")]
+        [HttpPost("receptionist-add-followup/{centerId}")]
+        public async Task<IActionResult> ReceptionistAddFollowUpAsync(int centerId, [FromBody] ReceptionistAddFollowUpRequestDto request)
+        {
+            var userId = int.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)!.Value);
+            var result = await followUpService.ReceptionistAddFollowUpAsync(centerId, userId, request);
+            return Ok(result);
+        }
 
+        [Authorize(Policy = "ReceptionistOnly")]
+        [HttpPost("receptionist-update-followup/{centerId}")]
+        public async Task<IActionResult> ReceptionistUpdateFollowUpAsync(int centerId, [FromBody] UpdateFollowUpRequestDto request)
+        {
+            var userId = int.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)!.Value);
+            var result = await followUpService.ReceptionistUpdateFollowUpAsync(centerId, userId, request);
+            return Ok(result);
+        }
+
+        [Authorize(Policy = "ReceptionistOnly")]
+        [HttpGet("receptionist-get-followups/{centerId}")]
+        public async Task<IActionResult> ReceptionistGetAllFollowUpAsync(int centerId, [FromQuery] PagedRequest request)
+        {
+            var userId = int.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)!.Value);
+            var result = await followUpService.ReceptionistGetAllFollowUpAsync(centerId, userId, request);
+            return Ok(result);
+        }
     }
 }

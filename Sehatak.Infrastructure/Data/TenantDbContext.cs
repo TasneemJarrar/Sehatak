@@ -400,6 +400,11 @@ namespace Sehatak.Infrastructure.Data
                       .HasForeignKey(e => e.OriginalAppointmentId)
                       .OnDelete(DeleteBehavior.Restrict);
 
+                entity.HasOne(e => e.ScheduledAppointment)
+                      .WithMany()
+                      .HasForeignKey(e => e.ScheduledAppointmentId)
+                      .OnDelete(DeleteBehavior.SetNull);
+
 
                 entity.HasOne(e => e.Patient)
                       .WithMany()
