@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Sehatak.Infrastructure.Data;
 
@@ -11,9 +12,11 @@ using Sehatak.Infrastructure.Data;
 namespace Sehatak.Infrastructure.Data.Migrations.TenantMigrations
 {
     [DbContext(typeof(TenantDbContext))]
-    partial class TenantDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260907115700_AddChangesToTenant")]
+    partial class AddChangesToTenant
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -524,7 +527,7 @@ namespace Sehatak.Infrastructure.Data.Migrations.TenantMigrations
                     b.Property<int>("PatientId")
                         .HasColumnType("int");
 
-                    b.Property<int?>("ReceptionistId")
+                    b.Property<int>("ReceptionistId")
                         .HasColumnType("int");
 
                     b.Property<int?>("ScheduledAppointmentId")
@@ -1318,7 +1321,8 @@ namespace Sehatak.Infrastructure.Data.Migrations.TenantMigrations
                     b.HasOne("Sehatak.Domain.Entities.TenantEntities.User", "Receptionist")
                         .WithMany()
                         .HasForeignKey("ReceptionistId")
-                        .OnDelete(DeleteBehavior.SetNull);
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
 
                     b.HasOne("Sehatak.Domain.Entities.TenantEntities.Appointment", "ScheduledAppointment")
                         .WithMany()

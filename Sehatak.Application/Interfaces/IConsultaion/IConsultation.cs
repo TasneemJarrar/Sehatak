@@ -25,6 +25,6 @@ namespace Sehatak.Application.Interfaces.ConsultaionInterface
         Task<PaymentResponseDto> GetPaymentPinding(int centerId, int userId, int paymentId);
         Task<string> CancelConsultaion(int centerId, int userId, int consultationId,int? subPatientId);
         Task<string> CompleteConsultation(int centerId, int userId, int consultationId);
-        Task<PagedResult<ConsultationResponseDto>> GetConsultationsScheduale(int centerId, int userId, PagedRequest request;
+        Task<PagedResult<ConsultationResponseDto>> GetConsultationsScheduale(int centerId, int userId, PagedRequest request);
     }
 }

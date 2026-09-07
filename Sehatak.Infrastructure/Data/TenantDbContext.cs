@@ -414,7 +414,7 @@ namespace Sehatak.Infrastructure.Data
                 entity.HasOne(e => e.Receptionist)
                       .WithMany()
                       .HasForeignKey(e => e.ReceptionistId)
-                      .OnDelete(DeleteBehavior.Restrict);
+                      .OnDelete(DeleteBehavior.SetNull);
             });
             // AUDIT LOG
             modelBuilder.Entity<AuditLog>(entity =>
