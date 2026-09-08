@@ -1,21 +1,14 @@
-﻿using DocumentFormat.OpenXml.Spreadsheet;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Sehatak.Application.DTOs.EditProfile.EditEmailOrPasswored;
 using Sehatak.Application.DTOs.EditProfile.EditProfileActors;
 using Sehatak.Application.DTOs.Exceptions;
 using Sehatak.Application.Interfaces.IEmail;
 using Sehatak.Application.Interfaces.IProfileInterface.ProfileAdmin;
 using Sehatak.Domain.Entities.General;
-using Sehatak.Domain.Entities.SharedEntities;
 using Sehatak.Domain.Entities.TenantEntities;
 using Sehatak.Domain.Enums;
 using Sehatak.Domain.Enums.SharedEnums;
 using Sehatak.Infrastructure.Data;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Sehatak.Infrastructure.Services.EditProfileService
 {

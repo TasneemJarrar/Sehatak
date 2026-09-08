@@ -5,15 +5,8 @@ using Sehatak.Application.DTOs.Exceptions;
 using Sehatak.Application.Interfaces.IEmail;
 using Sehatak.Application.Interfaces.IProfileInterface;
 using Sehatak.Domain.Entities.General;
-using Sehatak.Domain.Entities.SharedEntities;
 using Sehatak.Domain.Enums.SharedEnums;
 using Sehatak.Infrastructure.Data;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Umbraco.Core.Security;
 namespace Sehatak.Infrastructure.Services.PatientService.PatientProfile
 {
     public class PatientProfileService : IProfilePatient

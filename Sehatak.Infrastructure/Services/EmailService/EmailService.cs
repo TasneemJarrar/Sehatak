@@ -1,8 +1,6 @@
-﻿// Sehatak.Infrastructure/Services/EmailService.cs
-using Castle.Core.Logging;
+﻿
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
-using Sehatak.Application.Interfaces;
 using Sehatak.Application.Interfaces.IEmail;
 using System.Net;
 using System.Net.Mail;

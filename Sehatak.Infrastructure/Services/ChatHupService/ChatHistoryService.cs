@@ -1,7 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Sehatak.Application.DTOs.ChatHubDto;
 using Sehatak.Application.Interfaces.ChatInterface;
-using Sehatak.Domain.Enums;
 using Sehatak.Infrastructure.Data;
 
 namespace Sehatak.Infrastructure.Services

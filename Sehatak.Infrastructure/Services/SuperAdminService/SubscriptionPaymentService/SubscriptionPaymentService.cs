@@ -1,6 +1,4 @@
-﻿using Microsoft.AspNetCore.Hosting;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Metadata.Conventions;
+﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Hosting;
 using Sehatak.Application.Common;
 using Sehatak.Application.DTOs.Exceptions;
@@ -10,13 +8,7 @@ using Sehatak.Application.Interfaces.ISubscriptionPaymentService;
 using Sehatak.Domain.Entities.SharedEntities;
 using Sehatak.Domain.Enums.SharedEnums;
 using Sehatak.Infrastructure.Data;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Linq.Dynamic.Core;
-using System.Runtime.InteropServices;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Sehatak.Infrastructure.Services.SuperAdminService.SubscriptionPaymentService
 {

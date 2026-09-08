@@ -1,5 +1,4 @@
 ﻿using Sehatak.Domain.Enums;
-using System.ComponentModel.DataAnnotations;
 
 namespace Sehatak.Domain.Entities.TenantEntities
 {

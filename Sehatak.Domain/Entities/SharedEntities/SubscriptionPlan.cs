@@ -1,6 +1,4 @@
 ﻿
-using System.ComponentModel.DataAnnotations;
-
 namespace Sehatak.Domain.Entities.SharedEntities
 {
     public class SubscriptionPlan

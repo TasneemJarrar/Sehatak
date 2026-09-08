@@ -1,20 +1,10 @@
-﻿using DocumentFormat.OpenXml.Drawing.Diagrams;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Sehatak.Application.Interfaces.IEmail;
-using Sehatak.Domain.Entities.SharedEntities;
-using Sehatak.Domain.Entities.TenantEntities;
-using Sehatak.Domain.Enums;
-using Sehatak.Domain.Enums.PostponeEnums;
 using Sehatak.Domain.Enums.SharedEnums;
 using Sehatak.Infrastructure.Data;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Sehatak.Infrastructure.Services.SuperAdminService.Background
 {

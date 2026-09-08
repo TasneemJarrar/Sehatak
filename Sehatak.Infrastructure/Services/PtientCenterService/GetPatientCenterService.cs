@@ -1,20 +1,11 @@
-﻿using DocumentFormat.OpenXml.Office2016.Excel;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Diagnostics;
+﻿using Microsoft.EntityFrameworkCore;
 using Sehatak.Application.Common;
 using Sehatak.Application.DTOs.Exceptions;
 using Sehatak.Application.DTOs.PatientCenter;
-using Sehatak.Application.Interfaces.ApointmentInterface;
 using Sehatak.Application.Interfaces.IPatientCenter;
-using Sehatak.Domain.Entities.TenantEntities;
 using Sehatak.Domain.Enums;
 using Sehatak.Domain.Enums.SharedEnums;
 using Sehatak.Infrastructure.Data;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Sehatak.Infrastructure.Services.PtientCenterService
 {

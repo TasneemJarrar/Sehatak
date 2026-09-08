@@ -6,12 +6,7 @@ using Sehatak.Application.DTOs.FeatureDto;
 using Sehatak.Application.Interfaces.Features;
 using Sehatak.Domain.Entities.SharedEntities;
 using Sehatak.Infrastructure.Data;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Linq.Dynamic.Core;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Sehatak.Infrastructure.Services.SuperAdminService.Features.FeatureService
 {

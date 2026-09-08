@@ -1,10 +1,5 @@
 ﻿using Sehatak.Application.DTOs.PatienRegisterDto;
 using Sehatak.Application.DTOs.PatientLoginDto;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Sehatak.Application.Interfaces.AuthPatient
 {

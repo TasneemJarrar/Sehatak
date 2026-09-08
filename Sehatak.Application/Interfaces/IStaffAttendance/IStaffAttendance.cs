@@ -1,10 +1,4 @@
 ﻿using Sehatak.Application.DTOs.StaffAttendance;
-using Sehatak.Domain.Entities.TenantEntities;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Sehatak.Application.Interfaces.IStaffAttendance
 {

@@ -1,12 +1,5 @@
 ﻿using Microsoft.AspNetCore.Http;
-using Sehatak.Domain.Enums;
-using Sehatak.Domain.Enums.SharedEnums;
-using System;
-using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Sehatak.Application.DTOs.CreateCenterRequestDto
 {

@@ -1,5 +1,4 @@
 ﻿using Sehatak.Domain.Enums.SharedEnums;
-using System.ComponentModel.DataAnnotations;
 
 namespace Sehatak.Domain.Entities.SharedEntities
 {

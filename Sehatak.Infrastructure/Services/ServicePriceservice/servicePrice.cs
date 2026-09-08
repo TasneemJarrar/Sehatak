@@ -1,5 +1,4 @@
-﻿using DocumentFormat.OpenXml.Office.CustomUI;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Sehatak.Application.DTOs.Exceptions;
 using Sehatak.Application.DTOs.ServicePriceDto;
 using Sehatak.Application.Interfaces.ServicePriceInterface;
@@ -7,11 +6,6 @@ using Sehatak.Domain.Entities;
 using Sehatak.Domain.Enums;
 using Sehatak.Domain.Enums.SharedEnums;
 using Sehatak.Infrastructure.Data;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Sehatak.Infrastructure.Services.ServicePriceService
 {

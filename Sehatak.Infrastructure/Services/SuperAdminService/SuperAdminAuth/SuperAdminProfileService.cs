@@ -1,22 +1,11 @@
-﻿using DocumentFormat.OpenXml.Spreadsheet;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Sehatak.Application.DTOs.EditProfile.EditEmailOrPasswored;
 using Sehatak.Application.DTOs.EditProfile.EditSuperAdmin;
 using Sehatak.Application.DTOs.Exceptions;
-using Sehatak.Application.DTOs.PatienRegisterDto;
-using Sehatak.Application.Interfaces.AuthPatient;
 using Sehatak.Application.Interfaces.IEmail;
 using Sehatak.Application.Interfaces.IProfileInterface;
-using Sehatak.Domain.Entities;
-using Sehatak.Domain.Entities.General;
 using Sehatak.Domain.Entities.SharedEntities;
 using Sehatak.Infrastructure.Data;
-using Sehatak.Infrastructure.Security;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Sehatak.Infrastructure.Services.SuperAdminService.SuperAdminAuth
 {

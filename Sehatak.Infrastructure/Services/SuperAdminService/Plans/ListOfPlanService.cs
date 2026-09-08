@@ -7,12 +7,7 @@ using Sehatak.Application.DTOs.PlansDto;
 using Sehatak.Application.Interfaces.Plans;
 using Sehatak.Domain.Entities.SharedEntities;
 using Sehatak.Infrastructure.Data;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Linq.Dynamic.Core;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Sehatak.Infrastructure.Services.SuperAdminService.Plans
 {

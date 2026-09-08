@@ -4,9 +4,6 @@ using Sehatak.Application.DTOs.Exceptions;
 using Sehatak.Application.Interfaces.IEmail;
 using Sehatak.Domain.Enums.SharedEnums;
 using Sehatak.Infrastructure.Data;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace Sehatak.Infrastructure.Services
 {

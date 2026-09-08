@@ -1,6 +1,4 @@
-﻿using DocumentFormat.OpenXml.Bibliography;
-using DocumentFormat.OpenXml.Wordprocessing;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Sehatak.Application.Common;
 using Sehatak.Application.DTOs.AppointmentDto;
 using Sehatak.Application.DTOs.Exceptions;
@@ -369,7 +367,7 @@ namespace Sehatak.Infrastructure.Services.AppointmentService
 
                 if (followUp != null)
                 {
-                    followUp.Status = FollowUpStatus.Cancelled;
+                    followUp.Status = FollowUpStatus.Pending;
                     followUp.AllowFollowUpDate = followUp.AllowFollowUpDate?.AddDays(8);
                 }
 

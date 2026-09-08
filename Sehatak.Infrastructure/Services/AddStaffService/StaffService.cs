@@ -1,8 +1,6 @@
-﻿using DocumentFormat.OpenXml.Spreadsheet;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Sehatak.Application.DTOs.DepartmentDto;
 using Sehatak.Application.DTOs.Exceptions;
-using Sehatak.Application.DTOs.GetStaffDto;
 using Sehatak.Application.DTOs.StaffSignup;
 using Sehatak.Application.Interfaces.IEmail;
 using Sehatak.Application.Interfaces.SignUp;
@@ -10,11 +8,6 @@ using Sehatak.Domain.Entities.TenantEntities;
 using Sehatak.Domain.Enums;
 using Sehatak.Domain.Enums.SharedEnums;
 using Sehatak.Infrastructure.Data;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Sehatak.Infrastructure.Services.AddStaff
 {

@@ -1,7 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Sehatak.Application.DTOs.DashBoardDto;
 using Sehatak.Application.DTOs.Exceptions;
-using Sehatak.Application.Interfaces.ApointmentInterface;
 using Sehatak.Application.Interfaces.IDashBoard;
 using Sehatak.Domain.Enums;
 using Sehatak.Domain.Enums.SharedEnums;

@@ -1,18 +1,11 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Sehatak.Application.DTOs.Exceptions;
 using Sehatak.Application.DTOs.RenewSubscription;
-using Sehatak.Application.Interfaces.MedicalCenter;
 using Sehatak.Application.Interfaces.RenewSubscription;
-using Sehatak.Domain.Entities;
 using Sehatak.Domain.Entities.SharedEntities;
 using Sehatak.Domain.Enums;
 using Sehatak.Domain.Enums.SharedEnums;
 using Sehatak.Infrastructure.Data;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Sehatak.Infrastructure.Services.SuperAdminService.Plans
 {

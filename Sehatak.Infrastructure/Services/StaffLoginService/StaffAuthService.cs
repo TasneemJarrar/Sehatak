@@ -6,12 +6,6 @@ using Sehatak.Application.Interfaces.StaffLogin;
 using Sehatak.Domain.Enums;
 using Sehatak.Domain.Enums.SharedEnums;
 using Sehatak.Infrastructure.Data;
-using Sehatak.Infrastructure.Security;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Sehatak.Infrastructure.Services.StaffLogin
 {

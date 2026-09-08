@@ -7,11 +7,6 @@ using Sehatak.Domain.Enums;
 using Sehatak.Domain.Enums.PaymentEnums;
 using Sehatak.Domain.Enums.SharedEnums;
 using Sehatak.Infrastructure.Data;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Sehatak.Infrastructure.Services.FinancialReportServices
 {

@@ -1,6 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
-
+﻿
 namespace Sehatak.Domain.Entities.TenantEntities
 {
     public class Doctorschedule

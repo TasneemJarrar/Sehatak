@@ -4,16 +4,9 @@ using Sehatak.Application.DTOs.Exceptions;
 using Sehatak.Application.DTOs.StaffSignup;
 using Sehatak.Application.Interfaces.DepartmentInterface;
 using Sehatak.Application.Interfaces.IEmail;
-using Sehatak.Domain.Entities.SharedEntities;
 using Sehatak.Domain.Entities.TenantEntities;
 using Sehatak.Domain.Enums;
 using Sehatak.Infrastructure.Data;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Umbraco.Core.Security;
 
 namespace Sehatak.Infrastructure.Services.DepartmentService
 {

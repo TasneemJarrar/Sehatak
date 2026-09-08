@@ -1,6 +1,4 @@
-﻿using DocumentFormat.OpenXml.Office2016.Excel;
-using DocumentFormat.OpenXml.Wordprocessing;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Sehatak.Application.Common;
 using Sehatak.Application.DTOs.ConsultationDto;
 using Sehatak.Application.DTOs.Exceptions;

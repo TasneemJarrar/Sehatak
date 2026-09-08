@@ -1,11 +1,6 @@
 ﻿using Sehatak.Application.Common;
 using Sehatak.Application.DTOs.CentersDto;
 using Sehatak.Application.DTOs.CreateCenterRequestDto;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Sehatak.Application.Interfaces.MedicalCenter
 {

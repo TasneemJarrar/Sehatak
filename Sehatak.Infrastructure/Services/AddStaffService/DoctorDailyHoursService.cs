@@ -1,6 +1,4 @@
-﻿using DocumentFormat.OpenXml.Office2016.Excel;
-using DocumentFormat.OpenXml.Wordprocessing;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Sehatak.Application.Common;
 using Sehatak.Application.DTOs.AddDoctorDailyHour;
 using Sehatak.Application.DTOs.AddDoctorDailyHourDto;
@@ -163,7 +161,7 @@ namespace Sehatak.Infrastructure.Services.AddStaff
                 var followUp = relatedFollowUps.FirstOrDefault(f => f.ScheduledAppointmentId == appointment.Id);
                 if (followUp != null)
                 {
-                    followUp.Status = FollowUpStatus.Cancelled;
+                    followUp.Status = FollowUpStatus.Pending;
                     followUp.AllowFollowUpDate = followUp.AllowFollowUpDate?.AddDays(8);
                 }
             }

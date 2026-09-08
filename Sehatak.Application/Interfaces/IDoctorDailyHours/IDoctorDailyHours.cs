@@ -2,11 +2,6 @@
 using Sehatak.Application.DTOs.AddDoctorDailyHour;
 using Sehatak.Application.DTOs.AddDoctorDailyHourDto;
 using Sehatak.Application.DTOs.DoctorDto;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Sehatak.Application.Interfaces.AddDoctorDailyHours
 {
