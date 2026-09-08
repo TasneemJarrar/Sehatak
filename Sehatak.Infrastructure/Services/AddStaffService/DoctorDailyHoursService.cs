@@ -92,7 +92,9 @@ namespace Sehatak.Infrastructure.Services.AddStaff
 
             var doctor = await db.Doctors
              .Include(d => d.user)
-             .FirstOrDefaultAsync(d => d.userId == userId && d.user.isActive); 
+             .FirstOrDefaultAsync(d => d.userId == userId
+                                  && d.user.isActive);
+
             if (doctor == null)
                 throw new BusinessException("Doctor.NotFound");
 
@@ -111,7 +113,11 @@ namespace Sehatak.Infrastructure.Services.AddStaff
 
 
             var alreadyBlocked = await db.DoctorBlockedDays
-                .AnyAsync(d => d.doctorId == doctorId && d.date == date && d.isBlocked);
+                .AnyAsync(d => d.doctorId == doctorId 
+                          && d.date == date 
+                          && d.isBlocked 
+                          && d.timeSlot == null);
+
             if (alreadyBlocked)
                 throw new BusinessException("Doctor.DayAlreadyBlocked");
 
@@ -122,6 +128,15 @@ namespace Sehatak.Infrastructure.Services.AddStaff
                          && a.appointmentStatus == AppointmentStatus.Confirmed)
                 .OrderBy(a => a.timeSlot)
                 .ToListAsync();
+
+            var appointmentIds = appointments.Select(a => a.Id).ToList();
+
+            var relatedFollowUps = await db.FollowUps
+               .Where(f => f.DoctorId == doctorId
+                      && f.Status == FollowUpStatus.Booked
+                      && f.ScheduledAppointmentId != null
+                      && appointmentIds.Contains(f.ScheduledAppointmentId.Value))
+               .ToListAsync();
 
             foreach (var appointment in appointments)
             {
@@ -139,12 +154,18 @@ namespace Sehatak.Infrastructure.Services.AddStaff
 
                 db.Notifications.Add(new Notification
                 {
-                    UserId = (int)appointment.Patient.userId,
+                    UserId = appointment.Patient.NotifiableUserId,
                     Message = "نحيطكم علمًا بأنه تم إلغاء موعدكم اليوم. يرجى حجز موعد جديد.",
                     CreatedAt = DateTime.UtcNow,
                     Type = NotificationType.Cancellation,
                     IsRead = false
                 });
+                var followUp = relatedFollowUps.FirstOrDefault(f => f.ScheduledAppointmentId == appointment.Id);
+                if (followUp != null)
+                {
+                    followUp.Status = FollowUpStatus.Cancelled;
+                    followUp.AllowFollowUpDate = followUp.AllowFollowUpDate?.AddDays(8);
+                }
             }
 
             db.DoctorBlockedDays.Add(new DoctorBlockedDay
@@ -154,6 +175,7 @@ namespace Sehatak.Infrastructure.Services.AddStaff
                 Reason = "إلغاء من قبل الطبيب",
                 isBlocked = true
             });
+            
 
             var waitList = await db.Waitlists
                  .Include(w => w.Patient).ThenInclude(p => p.user)
@@ -168,7 +190,7 @@ namespace Sehatak.Infrastructure.Services.AddStaff
 
                 db.Notifications.Add(new Notification
                 {
-                    UserId = (int)item.Patient.userId,
+                    UserId = item.Patient.NotifiableUserId,
                     Message = "تم تعديل جدول الطبيب لهذا اليوم، يرجى محاولة الحجز من جديد على الموعد الجديد.",
                     CreatedAt = DateTime.UtcNow,
                     Type = NotificationType.Cancellation,
@@ -181,6 +203,7 @@ namespace Sehatak.Infrastructure.Services.AddStaff
             return appointments.Any()
                 ? "تم إلغاء مواعيد اليوم بنجاح ومنع الحجز الجديد لهذا التاريخ."
                 : "تم حظر هذا اليوم من الحجز بنجاح.";
+
         }
 
         public async Task<Application.Common.PagedResult<GetDoctorDailyHoursResponse>> GetDoctorDailyHoursAsync(int centerId, int doctorId, PagedRequest request)
@@ -291,7 +314,7 @@ namespace Sehatak.Infrastructure.Services.AddStaff
                 });
                 db.Notifications.Add(new Notification
                 {
-                    UserId = (int)appointment.Patient.userId,
+                    UserId = appointment.Patient.NotifiableUserId,
                     Message = "تم تغيير مواعيد دوام الطبيب، يرجى إعادة جدولة الموعد في أقرب وقت",
                     CreatedAt = DateTime.UtcNow,
                     Type = NotificationType.Cancellation,
@@ -318,7 +341,7 @@ namespace Sehatak.Infrastructure.Services.AddStaff
 
                 db.Notifications.Add(new Notification
                 {
-                    UserId = (int)item.Patient.userId,
+                    UserId = item.Patient.NotifiableUserId,
                     Message = "تم تعديل جدول الطبيب لهذا اليوم، يرجى محاولة الحجز من جديد على الموعد الجديد.",
                     CreatedAt = DateTime.UtcNow,
                     Type = NotificationType.Cancellation,

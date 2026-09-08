@@ -71,5 +71,14 @@ namespace Sehatak.API.Controllers.FollowUpController
             var result = await followUpService.ReceptionistGetAllFollowUpAsync(centerId, userId, request);
             return Ok(result);
         }
+
+        [Authorize(Policy = "PatientOnly")]
+        [HttpGet("patient-get-followups/{centerId}")]
+        public async Task<IActionResult> PatientGetAllFollowUpAsync(int centerId, [FromQuery] PagedRequest request, [FromQuery] int? subPatientId)
+        {
+            var userId = int.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)!.Value);
+            var result = await followUpService.PatientGetAllFollowUpAsync(centerId, userId, request, subPatientId);
+            return Ok(result);
+        }
     }
 }

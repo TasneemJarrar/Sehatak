@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using DocumentFormat.OpenXml.Wordprocessing;
+using Microsoft.EntityFrameworkCore;
 using Sehatak.Application.Common;
 using Sehatak.Application.DTOs.AppointmentDto;
 using Sehatak.Application.DTOs.Exceptions;
@@ -170,12 +171,23 @@ namespace Sehatak.Infrastructure.Services.AppointmentService
 
                 actingPatient = subPatient;
             }
-
+            FollowUp? followUp = null;
+            if(request.FollowUpId.HasValue)
+            {
+                followUp = await db.FollowUps
+                    .FirstOrDefaultAsync(f => f.Id == request.FollowUpId
+                                         && f.DoctorId == doctorId
+                                         && f.PatientId == actingPatient.patientId
+                                         && f.Status == FollowUpStatus.Pending);
+                if (followUp == null)
+                    throw new BusinessException("FollowUp.NotFoundOrNotPending");
+            }
+            
             var hasExistingAppointment = await db.Appointments
-               .AnyAsync(a => a.patientId == actingPatient.patientId
-                        && a.doctorId == doctorId
-                        && a.appointmentDate == request.dateOnly
-                        && a.appointmentStatus == AppointmentStatus.Confirmed);
+                .AnyAsync(a => a.patientId == actingPatient.patientId
+                    && a.doctorId == doctorId
+                    && a.appointmentDate == request.dateOnly
+                    && a.appointmentStatus == AppointmentStatus.Confirmed);
             if (hasExistingAppointment)
                 throw new BusinessException("Appointment.AlreadyExists");
 
@@ -195,6 +207,9 @@ namespace Sehatak.Infrastructure.Services.AppointmentService
 
             if (isWholeDayBlocked)
                 throw new BusinessException("Doctor.DayBlocked");
+
+            if(followUp!= null && request.dateOnly > followUp.AllowFollowUpDate)
+                throw new BusinessException("FollowUp.DateNotAllowed");
 
             var availableSlots = theoreticalSlots
                 .Where(slot => slot.HasValue)
@@ -247,19 +262,27 @@ namespace Sehatak.Infrastructure.Services.AppointmentService
             }
 
 
-            await db.Appointments.AddAsync(
-                new Appointment
-                {
-                    patientId = actingPatient.patientId,
-                    timeSlot = request.timeSlot,
-                    appointmentDate = request.dateOnly,
-                    appointmentStatus = AppointmentStatus.Confirmed,
-                    doctorId = doctorId,
-                    IsEmergency = false,
-                    updateAt = DateTime.UtcNow,
-                    createdAt = DateTime.UtcNow
+            var newAppointment =  new Appointment
+            {
+                patientId = actingPatient.patientId,
+                timeSlot = request.timeSlot,
+                appointmentDate = request.dateOnly,
+                appointmentStatus = AppointmentStatus.Confirmed,
+                doctorId = doctorId,
+                IsEmergency = false,
+                updateAt = DateTime.UtcNow,
+                createdAt = DateTime.UtcNow
 
-                });
+            };
+
+            await db.Appointments.AddAsync(newAppointment);
+
+            if (followUp != null)
+            {
+                followUp.Status = FollowUpStatus.Booked;
+                followUp.ScheduledAppointment = newAppointment;
+                followUp.UpdatedAt = DateTime.UtcNow;
+            }
 
             await db.SaveChangesAsync();
 
@@ -272,7 +295,6 @@ namespace Sehatak.Infrastructure.Services.AppointmentService
 
 
         }
-
         public async Task<string> DeleteDoctorSlotAsync(int centerId, int userId, DeleteDoctorSlotRequest request)
         {
             var today = DateOnly.FromDateTime(DateTime.UtcNow);
@@ -306,7 +328,11 @@ namespace Sehatak.Infrastructure.Services.AppointmentService
             var doctorId = doctor.Id;
 
             var alreadyBlocked = await db.DoctorBlockedDays
-                .AnyAsync(d => d.doctorId == doctor.Id && d.date == request.date && d.timeSlot == request.timeSlot && d.isBlocked);
+                .AnyAsync(d => d.doctorId == doctor.Id
+                          && d.date == request.date
+                          && d.timeSlot == request.timeSlot 
+                          && d.isBlocked);
+
             if (alreadyBlocked)
                 throw new BusinessException("Slot.AlreadyBlocked");
 
@@ -319,11 +345,23 @@ namespace Sehatak.Infrastructure.Services.AppointmentService
                        && a.timeSlot == request.timeSlot
                 ).FirstOrDefaultAsync();
 
-            if(bookedSlot != null)
+            
+            if (bookedSlot != null)
             {
                 bookedSlot.appointmentStatus = AppointmentStatus.Cancelled;
                 bookedSlot.cancellationReason = request.Reason ?? "تم حجب هذا الموعد من قبل الطبيب";
                 bookedSlot.updateAt = DateTime.UtcNow;
+
+                var followUp = await db.FollowUps
+                .FirstOrDefaultAsync(f => f.DoctorId == doctorId
+                       && f.Status == FollowUpStatus.Booked
+                       && f.ScheduledAppointmentId == bookedSlot.Id);
+
+                if (followUp != null)
+                {
+                    followUp.Status = FollowUpStatus.Cancelled;
+                    followUp.AllowFollowUpDate = followUp.AllowFollowUpDate?.AddDays(8);
+                }
 
                 await db.PostponedServices.AddAsync(
                     new PostponedService
@@ -355,6 +393,8 @@ namespace Sehatak.Infrastructure.Services.AppointmentService
                   Reason = request.Reason,
                   CreatedAt = DateTime.UtcNow
             });
+
+            
             await db.SaveChangesAsync();
 
             return "تم الغاء الموعد المحدد في نجاح.";
@@ -412,6 +452,17 @@ namespace Sehatak.Infrastructure.Services.AppointmentService
 
             if (appointment == null)
                 throw new BusinessException("Appointment.NotFound");
+
+            var followUp = await db.FollowUps
+                .FirstOrDefaultAsync(f => f.DoctorId == doctorId
+                                    && f.Status == FollowUpStatus.Booked
+                                    && f.ScheduledAppointmentId == appointment.Id
+                                    && f.PatientId == actingPatient.patientId);
+
+            if (followUp != null)
+            {
+                followUp.Status = FollowUpStatus.Cancelled;
+            }
 
             appointment.appointmentStatus = AppointmentStatus.Cancelled;
             appointment.updateAt = DateTime.UtcNow;

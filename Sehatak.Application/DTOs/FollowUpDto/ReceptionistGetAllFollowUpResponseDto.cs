@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace Sehatak.Application.DTOs.FollowUpDto
 {
-    public class ReceptionistGetAllFollowUpResponse
+    public class ReceptionistGetAllFollowUpResponseDto
     {
         public int DoctorId { get; set; }
         public string DoctorName { get; set; }

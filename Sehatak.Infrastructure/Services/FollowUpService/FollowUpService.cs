@@ -28,6 +28,10 @@ namespace Sehatak.Infrastructure.Services.FollowUpService
         }
         public async Task<FollowUpResponseDto> DoctorAddFollowUpAsync(int centerId, int userId, DoctorAddFollowUpRequestDto request)
         {
+            var today = DateOnly.FromDateTime(DateTime.UtcNow);
+            if (request.AllowFollowUpDate < today && request.AllowFollowUpDate!=null)
+                throw new BusinessException("Date.Invalid");
+
             var center = await sharedDbContext.MedicalCenters
                 .FirstOrDefaultAsync(c => c.Id == centerId
                                      && c.CenterStatus == CenterStatus.Active);
@@ -109,7 +113,7 @@ namespace Sehatak.Infrastructure.Services.FollowUpService
                 DoctorId = followUp.DoctorId,
                 DoctorName = doctor.user.firstName + " " + doctor.user.lastName,
                 AllowFollowUpDate = followUp.AllowFollowUpDate,
-                Status = followUp.Status.ToString(),
+                Status = followUp.Status,
                 CreatedAt = followUp.CreatedAt,
                 UpdatedAt = followUp.UpdatedAt,
             };
@@ -223,14 +227,67 @@ namespace Sehatak.Infrastructure.Services.FollowUpService
                 DoctorId = followUp.DoctorId,
                 DoctorName = doctor.user.firstName + " " + doctor.user.lastName,
                 AllowFollowUpDate = followUp.AllowFollowUpDate,
-                Status = followUp.Status.ToString(),
+                Status = followUp.Status,
                 CreatedAt = followUp.CreatedAt,
                 UpdatedAt = followUp.UpdatedAt,
             };
         }
 
+        public async Task<PagedResult<PatientGetAllFollowUpResponseDto>> PatientGetAllFollowUpAsync(int centerId, int userId, PagedRequest request, int? subPatientId)
+        {
+            var center = await sharedDbContext.MedicalCenters
+                .FirstOrDefaultAsync(c => c.Id == centerId
+                                     && c.CenterStatus == CenterStatus.Active);
+
+            if (center == null)
+                throw new BusinessException("Center.NoFound");
+
+            using var db = contextFactory.CreateForCenter(centerId);
+
+            var patient = await db.Patients
+                .Include(u => u.user)
+                .FirstOrDefaultAsync(p => p.userId == userId
+                                     && p.user.isActive);
+
+            if (patient == null)
+                throw new BusinessException("Patient.NotFound");
+
+            Patient actingPatient = patient;
+
+            if (subPatientId.HasValue)
+            {
+                var subPatient = await db.Patients
+                    .FirstOrDefaultAsync(s => s.patientId == subPatientId.Value
+                                         && s.ParentPatientId == patient.patientId);
+
+                if (subPatient == null)
+                    throw new BusinessException("SubPatient.NotFoundOrNotOwned");
+
+                actingPatient = subPatient;
+            }
+
+            var query = db.FollowUps
+                .Where(f => f.PatientId == actingPatient.patientId)
+                .OrderByDescending(f => f.CreatedAt)
+                .Select(f => new PatientGetAllFollowUpResponseDto
+                {
+                    Id = f.Id,
+                    DoctorId = f.DoctorId,
+                    DoctorName = f.Doctor.user.firstName + " " + f.Doctor.user.lastName,
+                    AllowFollowUpDate = f.AllowFollowUpDate,
+                    Status = f.Status,
+                    CreatedAt = f.CreatedAt,
+                    UpdatedAt = f.UpdatedAt,
+                });
+            return await query.ToPagedResultAsync(request.PageNumber, request.PageSize);
+        }
+
         public async Task<FollowUpResponseDto> ReceptionistAddFollowUpAsync(int centerId, int userId, ReceptionistAddFollowUpRequestDto request)
         {
+            var today = DateOnly.FromDateTime(DateTime.UtcNow);
+            if (request.AllowFollowUpDate < today && request.AllowFollowUpDate != null)
+                throw new BusinessException("Date.Invalid");
+
             var center = await sharedDbContext.MedicalCenters
                 .FirstOrDefaultAsync(c => c.Id == centerId
                                      && c.CenterStatus == CenterStatus.Active);
@@ -313,13 +370,13 @@ namespace Sehatak.Infrastructure.Services.FollowUpService
                 DoctorId = followUp.DoctorId,
                 DoctorName = doctor.user.firstName + " " + doctor.user.lastName,
                 AllowFollowUpDate = followUp.AllowFollowUpDate,
-                Status = followUp.Status.ToString(),
+                Status = followUp.Status,
                 CreatedAt = followUp.CreatedAt,
                 UpdatedAt = followUp.UpdatedAt,
             };
         }
 
-        public async Task<PagedResult<ReceptionistGetAllFollowUpResponse>> ReceptionistGetAllFollowUpAsync(int centerId, int userId, PagedRequest request)
+        public async Task<PagedResult<ReceptionistGetAllFollowUpResponseDto>> ReceptionistGetAllFollowUpAsync(int centerId, int userId, PagedRequest request)
         {
             var center = await sharedDbContext.MedicalCenters
                 .FirstOrDefaultAsync(c => c.Id == centerId
@@ -341,7 +398,7 @@ namespace Sehatak.Infrastructure.Services.FollowUpService
               .Where(f => f.Status == FollowUpStatus.Pending)
               .GroupBy(f => f.DoctorId)
               .OrderByDescending(g => g.Max(f => f.CreatedAt))
-              .Select(g => new ReceptionistGetAllFollowUpResponse
+              .Select(g => new ReceptionistGetAllFollowUpResponseDto
               {
                   DoctorId = g.Key,
                   DoctorName = g.First().Doctor.user.firstName + " " + g.First().Doctor.user.lastName,
@@ -430,7 +487,7 @@ namespace Sehatak.Infrastructure.Services.FollowUpService
                 DoctorId = followUp.DoctorId,
                 DoctorName = info.DoctorName,
                 AllowFollowUpDate = followUp.AllowFollowUpDate,
-                Status = followUp.Status.ToString(),
+                Status = followUp.Status,
                 CreatedAt = followUp.CreatedAt,
                 UpdatedAt = followUp.UpdatedAt,
             };
