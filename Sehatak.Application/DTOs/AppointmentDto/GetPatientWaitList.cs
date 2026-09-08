@@ -1,5 +1,7 @@
 ﻿
 
+using Sehatak.Domain.Enums;
+
 namespace Sehatak.Application.DTOs.AppointmentDto
 {
     public class GetPatientWaitList

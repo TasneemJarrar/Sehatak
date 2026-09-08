@@ -31,9 +31,7 @@ namespace Sehatak.Infrastructure.Services.PtientCenterService
 
 
             var patient = await db.Patients
-                .Include(u => u.user)
-                .Where(p => p.userId == request.userId)
-                .FirstOrDefaultAsync();
+                .FirstOrDefaultAsync(p => p.patientId == request.patientId);
 
             if (patient == null)
                 throw new BusinessException("Patient.NotFound");
@@ -55,7 +53,9 @@ namespace Sehatak.Infrastructure.Services.PtientCenterService
             return new GetPatientResponseDto
             {
                 Id = patient.patientId,
-                pateintName = $"{patient.user.firstName} {patient.user.lastName}",
+                pateintName = patient.userId != null
+                    ? patient.user.firstName + " " + patient.user.lastName
+                    : patient.FirstName + " " + patient.LastName,
                 appointments = appointments
 
             };
@@ -74,16 +74,18 @@ namespace Sehatak.Infrastructure.Services.PtientCenterService
 
             using var db = contextFactory.CreateForCenter(centerId);
 
-            var query = db.Users
-                .Where(u => u.role == userRole.Patient && u.patient != null 
-                      && u.patient.appointments.Any(a => a.appointmentStatus == status))
-                .OrderBy(u => u.firstName)              
+            var query = db.Patients
+                .Include(p => p.user)
+                .Where(u => u.appointments.Any(a => a.appointmentStatus == status))
+                .OrderBy(u => u.user.firstName)
                 .Select(u => new GetPatientResponseDto
                 {
-                    Id = u.Id,
-                    pateintName = u.firstName + " " + u.lastName,
+                    Id = u.patientId,
+                    pateintName = u.userId != null
+                    ? u.user.firstName + " " + u.user.lastName
+                    : u.FirstName + " " + u.LastName,
                     appointments = db.Appointments
-                        .Where(p => p.patientId == u.patient.patientId
+                        .Where(p => p.patientId == u.patientId
                                && p.appointmentStatus == status)
                         .Select(p => new PatientSummaryDto
                         {
