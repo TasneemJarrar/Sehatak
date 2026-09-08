@@ -19,9 +19,9 @@ namespace Sehatak.API.Controllers.PatientController.AppointmentController
         }
 
         [HttpPost("patient-available-doctor-slot/{centerId}/{doctorId}")]
-        public async Task<IActionResult> AvailableDoctorSlot(int centerId , int doctorId , [FromBody] DateOnly date)
+        public async Task<IActionResult> AvailableDoctorSlot(int centerId, int doctorId, [FromBody] DateOnly date)
         {
-            var result = await slotService.GetAvailableDoctorSlot(centerId , doctorId , date);
+            var result = await slotService.GetAvailableDoctorSlot(centerId, doctorId, date);
             return Ok(result);
         }
         [Authorize(Policy = "PatientOnly")]
@@ -43,7 +43,7 @@ namespace Sehatak.API.Controllers.PatientController.AppointmentController
 
         [Authorize(Policy = "DoctorOnly")]
         [HttpPost("doctor-cancel-slot/{centerId}")]
-        public async Task<IActionResult> CancelSlotAsync(int centerId , DeleteDoctorSlotRequest request)
+        public async Task<IActionResult> CancelSlotAsync(int centerId, DeleteDoctorSlotRequest request)
         {
             var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
             var result = await slotService.DeleteDoctorSlotAsync(centerId, userId, request);
@@ -59,26 +59,26 @@ namespace Sehatak.API.Controllers.PatientController.AppointmentController
         }
         [Authorize(Policy = "PatientOnly")]
         [HttpPost("patient-join-waitlist/{centerId}/{doctorId}")]
-        public async Task<IActionResult> JoinWaitLis(int centerId, int doctorId, [FromBody] DateOnly date,int?subPatientId)
+        public async Task<IActionResult> JoinWaitLis(int centerId, int doctorId, [FromBody] DateOnly date, int? subPatientId)
         {
             var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
-            var result = await slotService.JoinWaitListAsync(centerId, doctorId, userId, date,subPatientId);
+            var result = await slotService.JoinWaitListAsync(centerId, doctorId, userId, date, subPatientId);
             return Ok(result);
         }
 
         [Authorize(Policy = "ReceptionistOnly")]
         [HttpGet("Receptionist-view-waitlist/{centerId}/{doctorId}")]
-        public async Task<IActionResult> ViewPatientsWaitList(int centerId, int doctorId,DateOnly date,[FromQuery] PagedRequest request)
+        public async Task<IActionResult> ViewPatientsWaitList(int centerId, int doctorId, DateOnly date, [FromQuery] PagedRequest request)
         {
             var result = await slotService.GetPatientsWaitListsAsync(centerId, doctorId, date, request);
             return Ok(result);
         }
         [Authorize(Policy = "PatientOnly")]
         [HttpGet("patient-view-my-waitlist/{centerId}/{doctorId}")]
-        public async Task<IActionResult> ViewWaitLis(int centerId, int doctorId, DateOnly date,int?subPatientId)
+        public async Task<IActionResult> ViewWaitLis(int centerId, int doctorId, DateOnly date, int? subPatientId)
         {
             var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
-            var result = await slotService.GetPatientWaitListsAsync(centerId, doctorId,userId ,date,subPatientId);
+            var result = await slotService.GetPatientWaitListsAsync(centerId, doctorId, userId, date, subPatientId);
             return Ok(result);
         }
 
@@ -90,13 +90,38 @@ namespace Sehatak.API.Controllers.PatientController.AppointmentController
         }
 
         [HttpGet("patient-get-doctors/{centerId}")]
-        public async Task<IActionResult> GetDoctors(int centerId,[FromQuery] PagedRequest request)
+        public async Task<IActionResult> GetDoctors(int centerId, [FromQuery] PagedRequest request)
         {
-            var result = await slotService.GetDoctorsAsync(centerId,request);
+            var result = await slotService.GetDoctorsAsync(centerId, request);
             return Ok(result);
         }
 
+        [Authorize(Policy = "ReceptionistOnly")]
+        [HttpPost("receptionist-book-appointment/{centerId}/{doctorId}")]
+        public async Task<IActionResult> ReceptionistBookAppointment(int centerId, int doctorId, [FromBody] ReceptionistBookRequestDto request)
+        {
+            var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+            var result = await slotService.ReceptionistBookAppointmentAsync(centerId, userId, doctorId, request);
+            return Ok(result);
 
+        }
 
+        [Authorize(Policy = "ReceptionistOnly")]
+        [HttpPost("receptionist-cancel-appointment/{centerId}/{doctorId}")]
+        public async Task<IActionResult> ReceptionistCancelAppointment(int centerId, int doctorId, [FromBody] ReceptionistCancelAppointmentRequest request)
+        {
+            var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+            var result = await slotService.ReceptionistCancelAppointmentAsync(centerId, doctorId, userId, request);
+            return Ok(result);
+        }
+
+        [Authorize(Policy = "ReceptionistOnly")]
+        [HttpPost("receptionist-reschedule-appointment/{centerId}/{doctorId}")]
+        public async Task<IActionResult> ReceptionistRescheduleAppointment(int centerId, int doctorId, [FromBody] ReceptionistRescheduleAppointmentRequest request)
+        {
+            var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+            var result = await slotService.ReceptionistRescheduleAppointmentAsync(centerId, doctorId, userId, request);
+            return Ok(result);
+        }
     }
 }

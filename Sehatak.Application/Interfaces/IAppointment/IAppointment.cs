@@ -21,5 +21,8 @@ namespace Sehatak.Application.Interfaces.ApointmentInterface
         Task<PagedResult<GetPatientWaitList>> GetPatientsWaitListsAsync(int centerId,int doctorId,DateOnly date,PagedRequest request);
         Task<GetPatientWaitList> GetPatientWaitListsAsync(int centerId, int doctorId, int userId ,DateOnly date,int?subPatientId);
         Task<PagedResult<GetDoctorsResponseDto>> GetDoctorsAsync(int centerId, PagedRequest request);
+        Task<BookAppointmentRespesponse> ReceptionistBookAppointmentAsync(int centerId,int userId, int doctorId, ReceptionistBookRequestDto request);
+        Task<string> ReceptionistCancelAppointmentAsync(int centerId, int doctorId, int userId, ReceptionistCancelAppointmentRequest request);
+        Task<BookAppointmentRespesponse> ReceptionistRescheduleAppointmentAsync(int centerId, int doctorId, int userId, ReceptionistRescheduleAppointmentRequest request);
     }
 }

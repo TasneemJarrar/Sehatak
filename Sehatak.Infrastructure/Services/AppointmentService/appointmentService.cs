@@ -1,4 +1,5 @@
-﻿using DocumentFormat.OpenXml.Wordprocessing;
+﻿using DocumentFormat.OpenXml.Bibliography;
+using DocumentFormat.OpenXml.Wordprocessing;
 using Microsoft.EntityFrameworkCore;
 using Sehatak.Application.Common;
 using Sehatak.Application.DTOs.AppointmentDto;
@@ -19,7 +20,7 @@ namespace Sehatak.Infrastructure.Services.AppointmentService
         private readonly SharedDbContext sharedDbContext;
         private readonly TenantDbContextFactory contextFactory;
         private readonly GenerateTheoreticalSlots generateTheoreticalSlots;
-        public appointmentService(SharedDbContext sharedDbContext , TenantDbContextFactory contextFactory , GenerateTheoreticalSlots generateTheoreticalSlot)
+        public appointmentService(SharedDbContext sharedDbContext, TenantDbContextFactory contextFactory, GenerateTheoreticalSlots generateTheoreticalSlot)
         {
             this.sharedDbContext = sharedDbContext;
             this.contextFactory = contextFactory;
@@ -51,9 +52,9 @@ namespace Sehatak.Infrastructure.Services.AppointmentService
 
 
             var isDayBlocked = await db.DoctorBlockedDays
-                 .Where(bd => bd.doctorId == doctorId 
-                        && bd.isBlocked 
-                        && bd.date == date 
+                 .Where(bd => bd.doctorId == doctorId
+                        && bd.isBlocked
+                        && bd.date == date
                         && bd.timeSlot.HasValue)
                  .Select(bd => bd.timeSlot!.Value)
                  .ToListAsync();
@@ -82,7 +83,7 @@ namespace Sehatak.Infrastructure.Services.AppointmentService
                 .AnyAsync(bd => bd.doctorId == doctorId && bd.isBlocked && bd.date == date && bd.timeSlot == null);
             var availableSlots = isWholeDayBlocked
                 ? new List<TimeOnly>()
-               :theoreticalSlots
+               : theoreticalSlots
                .Where(slot => slot.HasValue)
                .Select(slot => slot!.Value)
                .Except(bookedSlots.Where(b => b.HasValue).Select(b => b!.Value))
@@ -96,7 +97,7 @@ namespace Sehatak.Infrastructure.Services.AppointmentService
                 availableSlots = availableSlots.Where(slot => slot > nowTime).ToList();
             }
 
-           availableSlots = availableSlots.OrderBy(s => s).ToList();
+            availableSlots = availableSlots.OrderBy(s => s).ToList();
 
             return new AvailableDoctorSlot
             {
@@ -108,9 +109,9 @@ namespace Sehatak.Infrastructure.Services.AppointmentService
             };
 
         }
-        public async Task<BookAppointmentRespesponse> BookAppointmentAsync(int centerId , int doctorId ,int userId , BookAppointmentRequest request)
+        public async Task<BookAppointmentRespesponse> BookAppointmentAsync(int centerId, int doctorId, int userId, BookAppointmentRequest request)
         {
-            
+
             var today = DateOnly.FromDateTime(DateTime.UtcNow);
             if (request.dateOnly < today)
                 throw new BusinessException("Date.Invalid");
@@ -133,9 +134,9 @@ namespace Sehatak.Infrastructure.Services.AppointmentService
                 throw new BusinessException("Doctor.NotFound");
 
             var isDayBlocked = await db.DoctorBlockedDays
-                .Where(bd => bd.doctorId == doctorId 
-                       && bd.isBlocked 
-                       && bd.date == request.dateOnly 
+                .Where(bd => bd.doctorId == doctorId
+                       && bd.isBlocked
+                       && bd.date == request.dateOnly
                        && bd.timeSlot.HasValue)
                 .Select(bd => bd.timeSlot!.Value)
                 .ToListAsync();
@@ -172,7 +173,7 @@ namespace Sehatak.Infrastructure.Services.AppointmentService
                 actingPatient = subPatient;
             }
             FollowUp? followUp = null;
-            if(request.FollowUpId.HasValue)
+            if (request.FollowUpId.HasValue)
             {
                 followUp = await db.FollowUps
                     .FirstOrDefaultAsync(f => f.Id == request.FollowUpId
@@ -182,7 +183,7 @@ namespace Sehatak.Infrastructure.Services.AppointmentService
                 if (followUp == null)
                     throw new BusinessException("FollowUp.NotFoundOrNotPending");
             }
-            
+
             var hasExistingAppointment = await db.Appointments
                 .AnyAsync(a => a.patientId == actingPatient.patientId
                     && a.doctorId == doctorId
@@ -202,13 +203,13 @@ namespace Sehatak.Infrastructure.Services.AppointmentService
 
             var isWholeDayBlocked = await db.DoctorBlockedDays
                .AnyAsync(bd => bd.doctorId == doctorId
-                         && bd.isBlocked && bd.date == request.dateOnly 
+                         && bd.isBlocked && bd.date == request.dateOnly
                          && bd.timeSlot == null);
 
             if (isWholeDayBlocked)
                 throw new BusinessException("Doctor.DayBlocked");
 
-            if(followUp!= null && request.dateOnly > followUp.AllowFollowUpDate)
+            if (followUp != null && request.dateOnly > followUp.AllowFollowUpDate)
                 throw new BusinessException("FollowUp.DateNotAllowed");
 
             var availableSlots = theoreticalSlots
@@ -262,7 +263,7 @@ namespace Sehatak.Infrastructure.Services.AppointmentService
             }
 
 
-            var newAppointment =  new Appointment
+            var newAppointment = new Appointment
             {
                 patientId = actingPatient.patientId,
                 timeSlot = request.timeSlot,
@@ -283,6 +284,15 @@ namespace Sehatak.Infrastructure.Services.AppointmentService
                 followUp.ScheduledAppointment = newAppointment;
                 followUp.UpdatedAt = DateTime.UtcNow;
             }
+
+            await db.Notifications.AddAsync(new Notification
+            {
+                UserId = patient.userId!.Value,
+                Type = NotificationType.Appointment,
+                IsRead = false,
+                CreatedAt = DateTime.UtcNow,
+                Message = $"تم حجز موعد لك بتاريخ {request.dateOnly} الساعة {request.timeSlot} من قبل الاستقبال."
+            });
 
             await db.SaveChangesAsync();
 
@@ -312,7 +322,7 @@ namespace Sehatak.Infrastructure.Services.AppointmentService
                 .Include(u => u.user)
                 .FirstOrDefaultAsync(d => d.userId == userId
                                      && d.user.isActive);
-                
+
 
             if (doctor == null)
                 throw new BusinessException("Doctor.NotFound");
@@ -330,22 +340,22 @@ namespace Sehatak.Infrastructure.Services.AppointmentService
             var alreadyBlocked = await db.DoctorBlockedDays
                 .AnyAsync(d => d.doctorId == doctor.Id
                           && d.date == request.date
-                          && d.timeSlot == request.timeSlot 
+                          && d.timeSlot == request.timeSlot
                           && d.isBlocked);
 
             if (alreadyBlocked)
                 throw new BusinessException("Slot.AlreadyBlocked");
 
             var bookedSlot = await db.Appointments
-                .Include(p=>p.Patient)
-                .ThenInclude(u=>u.user)
-                .Where(a=>a.doctorId == doctorId
+                .Include(p => p.Patient)
+                .ThenInclude(u => u.user)
+                .Where(a => a.doctorId == doctorId
                        && a.appointmentStatus == AppointmentStatus.Confirmed
                        && a.appointmentDate == request.date
                        && a.timeSlot == request.timeSlot
                 ).FirstOrDefaultAsync();
 
-            
+
             if (bookedSlot != null)
             {
                 bookedSlot.appointmentStatus = AppointmentStatus.Cancelled;
@@ -386,22 +396,22 @@ namespace Sehatak.Infrastructure.Services.AppointmentService
             db.DoctorBlockedDays.Add(
             new DoctorBlockedDay
             {
-                  doctorId = doctorId,
-                  date = request.date,
-                  isBlocked = true,
-                  timeSlot = request.timeSlot,
-                  Reason = request.Reason,
-                  CreatedAt = DateTime.UtcNow
+                doctorId = doctorId,
+                date = request.date,
+                isBlocked = true,
+                timeSlot = request.timeSlot,
+                Reason = request.Reason,
+                CreatedAt = DateTime.UtcNow
             });
 
-            
+
             await db.SaveChangesAsync();
 
             return "تم الغاء الموعد المحدد في نجاح.";
 
         }
 
-        public async Task<string> CancelAppointmentAsync(int centerId,int doctorId, int userId, CancelAppointmentRequest request)
+        public async Task<string> CancelAppointmentAsync(int centerId, int doctorId, int userId, CancelAppointmentRequest request)
         {
             var center = await sharedDbContext.MedicalCenters
                 .FirstOrDefaultAsync(c => c.Id == centerId && c.CenterStatus == CenterStatus.Active);
@@ -422,7 +432,7 @@ namespace Sehatak.Infrastructure.Services.AppointmentService
 
             var patient = await db.Patients
                 .Include(u => u.user)
-                .FirstOrDefaultAsync(u => u.userId == userId 
+                .FirstOrDefaultAsync(u => u.userId == userId
                                      && u.user.isActive);
             if (patient == null)
                 throw new BusinessException("Patient.NotFound");
@@ -531,7 +541,7 @@ namespace Sehatak.Infrastructure.Services.AppointmentService
 
             var patient = await db.Patients
                .Include(p => p.user)
-               .FirstOrDefaultAsync(p => p.userId == userId 
+               .FirstOrDefaultAsync(p => p.userId == userId
                                     && p.user.isActive);
             if (patient == null)
                 throw new BusinessException("Patient.NotFound");
@@ -559,7 +569,7 @@ namespace Sehatak.Infrastructure.Services.AppointmentService
                 throw new BusinessException("Doctor.NotFound");
 
             var appintment = await db.Appointments
-                .Include(p=>p.Patient)
+                .Include(p => p.Patient)
                 .Where(a => a.Id == request.appointmentId
                        && a.doctorId == doctor.Id
                        && a.patientId == actingPatient.patientId
@@ -570,9 +580,9 @@ namespace Sehatak.Infrastructure.Services.AppointmentService
                 throw new BusinessException("Appointment.NotFound");
 
             var isWholeDayBlocked = await db.DoctorBlockedDays
-                .AnyAsync(bd => bd.doctorId == doctorId 
-                          && bd.isBlocked 
-                          && bd.date == request.date 
+                .AnyAsync(bd => bd.doctorId == doctorId
+                          && bd.isBlocked
+                          && bd.date == request.date
                           && bd.timeSlot == null);
 
             if (isWholeDayBlocked)
@@ -671,7 +681,7 @@ namespace Sehatak.Infrastructure.Services.AppointmentService
 
         }
 
-        public async Task<string> JoinWaitListAsync(int centerId, int doctorId, int userId, DateOnly date,int? subPatientId)
+        public async Task<string> JoinWaitListAsync(int centerId, int doctorId, int userId, DateOnly date, int? subPatientId)
         {
             var today = DateOnly.FromDateTime(DateTime.UtcNow);
             if (date < today)
@@ -721,7 +731,7 @@ namespace Sehatak.Infrastructure.Services.AppointmentService
                        && w.PatientId == actingPatient.patientId
                        && w.Status == WaitlistStatus.Waiting
                        && w.PreferredDate == date);
-                
+
 
             if (alreadyInWaitlist)
                 throw new BusinessException("Waitlist.AlreadyJoined");
@@ -736,14 +746,14 @@ namespace Sehatak.Infrastructure.Services.AppointmentService
                     Status = WaitlistStatus.Waiting,
                 });
 
-            
+
 
             await db.SaveChangesAsync();
             return "تم إضافتك لقائمة الانتظار، سيتم إعلامك عند توفر موعد.";
 
         }
 
-        public async Task<PagedResult<GetPatientWaitList>> GetPatientsWaitListsAsync(int centerId, int doctorId,DateOnly date,PagedRequest request)
+        public async Task<PagedResult<GetPatientWaitList>> GetPatientsWaitListsAsync(int centerId, int doctorId, DateOnly date, PagedRequest request)
         {
 
             var center = await sharedDbContext.MedicalCenters
@@ -764,7 +774,7 @@ namespace Sehatak.Infrastructure.Services.AppointmentService
                 throw new BusinessException("Doctor.NotFound");
 
             var query = db.Waitlists
-                .Include(p=>p.Patient)
+                .Include(p => p.Patient)
                 .Where(d => d.DoctorId == doctor.Id
                        && d.PreferredDate == date)
                 .OrderByDescending(d => d.PreferredDate)
@@ -786,7 +796,7 @@ namespace Sehatak.Infrastructure.Services.AppointmentService
 
         }
 
-        public async Task<GetPatientWaitList> GetPatientWaitListsAsync(int centerId, int doctorId, int userId, DateOnly date,int?subPatientId)
+        public async Task<GetPatientWaitList> GetPatientWaitListsAsync(int centerId, int doctorId, int userId, DateOnly date, int? subPatientId)
         {
             var center = await sharedDbContext.MedicalCenters
                 .FirstOrDefaultAsync(c => c.Id == centerId
@@ -827,7 +837,7 @@ namespace Sehatak.Infrastructure.Services.AppointmentService
                 actingPatient = subPatient;
             }
 
-            var waitList =await db.Waitlists
+            var waitList = await db.Waitlists
                 .Include(p => p.Patient)
                 .Where(w => w.PatientId == actingPatient.patientId
                                      && w.DoctorId == doctorId
@@ -880,7 +890,7 @@ namespace Sehatak.Infrastructure.Services.AppointmentService
 
             return result;
         }
-        
+
 
         public async Task<PagedResult<GetDoctorsResponseDto>> GetDoctorsAsync(int centerId, PagedRequest request)
         {
@@ -911,6 +921,489 @@ namespace Sehatak.Infrastructure.Services.AppointmentService
                 });
 
             return await query.ToPagedResultAsync(request.PageNumber, request.PageSize);
+        }
+
+        public async Task<BookAppointmentRespesponse> ReceptionistBookAppointmentAsync(int centerId, int userId, int doctorId, ReceptionistBookRequestDto request)
+        {
+            var today = DateOnly.FromDateTime(DateTime.UtcNow);
+            if (request.dateOnly < today)
+                throw new BusinessException("Date.Invalid");
+
+            var center = await sharedDbContext.MedicalCenters
+                .FirstOrDefaultAsync(c => c.Id == centerId
+                                     && c.CenterStatus == CenterStatus.Active);
+
+            if (center == null)
+                throw new BusinessException("Center.NotFound");
+
+            using var db = contextFactory.CreateForCenter(centerId);
+
+            var receptionist = await db.Users
+                .FirstOrDefaultAsync(u => u.Id == userId
+                                     && u.isActive
+                                     && u.role == userRole.Receptionist);
+
+            if (receptionist == null)
+                throw new BusinessException("Receptionist.NotFound");
+
+            var doctor = await db.Doctors
+                .Include(u => u.user)
+                .FirstOrDefaultAsync(d => d.Id == doctorId
+                                     && d.user.isActive);
+
+            if (doctor == null)
+                throw new BusinessException("Doctor.NotFound");
+
+            var patient = await db.Patients
+                .Include(u => u.user)
+                .FirstOrDefaultAsync(p => p.patientId == request.PatientId
+                                     && p.user.isActive);
+
+            if (patient == null)
+                throw new BusinessException("Patient.NotFound");
+
+            Patient actingPatient = patient;
+
+            if (request.SubPatientId.HasValue)
+            {
+                var subPatient = await db.Patients
+                    .FirstOrDefaultAsync(s => s.patientId == request.SubPatientId.Value
+                                         && s.ParentPatientId == patient.patientId);
+
+                if (subPatient == null)
+                    throw new BusinessException("SubPatient.NotFoundOrNotOwned");
+
+                actingPatient = subPatient;
+            }
+
+            var isDayBlocked = await db.DoctorBlockedDays
+               .Where(bd => bd.doctorId == doctorId
+                      && bd.isBlocked
+                      && bd.date == request.dateOnly
+                      && bd.timeSlot.HasValue)
+               .Select(bd => bd.timeSlot!.Value)
+               .ToListAsync();
+
+
+            var schedule = await db.DoctorSchedules
+               .Include(d => d.doctor)
+               .Where(d => d.DoctorId == doctorId
+                      && d.IsActive
+                      && d.DayOfWeek == request.dateOnly.DayOfWeek)
+               .FirstOrDefaultAsync();
+
+            if (schedule == null)
+                throw new BusinessException("Schedule.NotFound");
+
+            FollowUp? followUp = null;
+            if (request.FollowUpId.HasValue)
+            {
+                followUp = await db.FollowUps
+                    .FirstOrDefaultAsync(f => f.Id == request.FollowUpId
+                                         && f.DoctorId == doctorId
+                                         && f.PatientId == actingPatient.patientId
+                                         && f.Status == FollowUpStatus.Pending);
+                if (followUp == null)
+                    throw new BusinessException("FollowUp.NotFoundOrNotPending");
+            }
+
+            var hasExistingAppointment = await db.Appointments
+                            .AnyAsync(a => a.patientId == actingPatient.patientId
+                                && a.doctorId == doctorId
+                                && a.appointmentDate == request.dateOnly
+                                && a.appointmentStatus == AppointmentStatus.Confirmed);
+
+            if (hasExistingAppointment)
+                throw new BusinessException("Appointment.AlreadyExists");
+
+            var theoreticalSlots = generateTheoreticalSlots.GenerateTheoreticalSlot(schedule.StartTime, schedule.EndTime, (int)schedule.SlotDurationMinutes);
+
+            var bookedSlots = await db.Appointments
+                .Where(a => a.doctorId == doctorId
+                       && a.appointmentStatus == AppointmentStatus.Confirmed
+                       && a.appointmentDate == request.dateOnly)
+                      .Select(a => a.timeSlot)
+                      .ToListAsync();
+
+            var isWholeDayBlocked = await db.DoctorBlockedDays
+               .AnyAsync(bd => bd.doctorId == doctorId
+                         && bd.isBlocked && bd.date == request.dateOnly
+                         && bd.timeSlot == null);
+
+            if (isWholeDayBlocked)
+                throw new BusinessException("Doctor.DayBlocked");
+
+            if (followUp != null && request.dateOnly > followUp.AllowFollowUpDate)
+                throw new BusinessException("FollowUp.DateNotAllowed");
+
+            var availableSlots = theoreticalSlots
+                .Where(slot => slot.HasValue)
+                .Select(slot => slot!.Value)
+                .Except(bookedSlots.Where(b => b.HasValue).Select(b => b!.Value))
+                .Except(isDayBlocked)
+                .OrderBy(s => s)
+                .ToList();
+
+            if (request.dateOnly == DateOnly.FromDateTime(DateTime.UtcNow))
+            {
+                var nowTime = TimeOnly.FromDateTime(DateTime.UtcNow);
+                availableSlots = availableSlots.Where(slot => slot > nowTime).ToList();
+            }
+
+            availableSlots = availableSlots.OrderBy(s => s).ToList();
+
+
+            if (!availableSlots.Contains(request.timeSlot))
+            {
+                if (availableSlots.Any())
+                {
+                    return new BookAppointmentRespesponse
+                    {
+                        Message = "هذا الموعد محجوز من قبل , يمكنك اختيار موعد اخر !",
+                        Success = false,
+                        AlternativeSlots = availableSlots
+                    };
+
+                }
+                else
+                {
+
+                    db.Waitlists.Add(new Waitlist
+                    {
+                        PatientId = actingPatient.patientId,
+                        DoctorId = doctorId,
+                        PreferredDate = request.dateOnly,
+                        Status = WaitlistStatus.Waiting,
+                        CreatedAt = DateTime.UtcNow
+                    });
+                    await db.SaveChangesAsync();
+                    return new BookAppointmentRespesponse
+                    {
+                        Message = "اليوم ممتلئ بالكامل , تم وضعك في قائمة الانتظار في حال توفر موعد سيتم اخبارك",
+                        Success = false,
+                        AlternativeSlots = null
+                    };
+                }
+            }
+
+
+            var newAppointment = new Appointment
+            {
+                patientId = actingPatient.patientId,
+                timeSlot = request.timeSlot,
+                appointmentDate = request.dateOnly,
+                appointmentStatus = AppointmentStatus.Confirmed,
+                doctorId = doctorId,
+                IsEmergency = false,
+                updateAt = DateTime.UtcNow,
+                createdAt = DateTime.UtcNow,
+                ReceptionistId = userId
+            };
+
+            await db.Appointments.AddAsync(newAppointment);
+
+            if (followUp != null)
+            {
+                followUp.Status = FollowUpStatus.Booked;
+                followUp.ScheduledAppointment = newAppointment;
+                followUp.UpdatedAt = DateTime.UtcNow;
+            }
+
+            await db.Notifications.AddAsync(new Notification
+            {
+                UserId = patient.userId!.Value,
+                Type = NotificationType.Appointment,
+                IsRead = false,
+                CreatedAt = DateTime.UtcNow,
+                Message = $"تم حجز موعد لك بتاريخ {request.dateOnly} الساعة {request.timeSlot} من قبل الاستقبال."
+            });
+
+            await db.SaveChangesAsync();
+
+            return new BookAppointmentRespesponse
+            {
+                Message = "تم حجز الموعد بنجاح",
+                Success = true,
+                AlternativeSlots = null
+            };
+        }
+
+        public async Task<string> ReceptionistCancelAppointmentAsync(int centerId, int doctorId, int userId, ReceptionistCancelAppointmentRequest request)
+        {
+            var center = await sharedDbContext.MedicalCenters
+                .FirstOrDefaultAsync(c => c.Id == centerId && c.CenterStatus == CenterStatus.Active);
+
+            if (center == null)
+                throw new BusinessException("Center.NotFound");
+
+            using var db = contextFactory.CreateForCenter(centerId);
+
+            var doctor = await db.Doctors
+                .Include(u => u.user)
+                .FirstOrDefaultAsync(d => d.Id == doctorId
+                                     && d.user.isActive);
+
+            if (doctor == null)
+                throw new BusinessException("Doctor.NotFound");
+
+
+            var patient = await db.Patients
+                .Include(u => u.user)
+                .FirstOrDefaultAsync(u => u.patientId == request.PatientId
+                                     && u.user.isActive);
+            if (patient == null)
+                throw new BusinessException("Patient.NotFound");
+
+            Patient actingPatient = patient;
+
+            if (request.SubPatientId.HasValue)
+            {
+                var subPatient = await db.Patients
+                    .FirstOrDefaultAsync(s => s.patientId == request.SubPatientId.Value
+                                         && s.ParentPatientId == patient.patientId);
+
+                if (subPatient == null)
+                    throw new BusinessException("SubPatient.NotFoundOrNotOwned");
+
+                actingPatient = subPatient;
+            }
+
+            var appointment = await db.Appointments
+                .Include(p => p.Patient)
+                .Where(a => a.doctorId == doctorId
+                       && a.patientId == actingPatient.patientId
+                       && a.appointmentStatus == AppointmentStatus.Confirmed
+                       && a.appointmentDate == request.date
+                       && a.timeSlot == request.timeSlot
+                ).FirstOrDefaultAsync();
+
+            if (appointment == null)
+                throw new BusinessException("Appointment.NotFound");
+
+            var followUp = await db.FollowUps
+                .FirstOrDefaultAsync(f => f.DoctorId == doctorId
+                                    && f.Status == FollowUpStatus.Booked
+                                    && f.ScheduledAppointmentId == appointment.Id
+                                    && f.PatientId == actingPatient.patientId);
+
+            if (followUp != null)
+            {
+                followUp.Status = FollowUpStatus.Cancelled;
+            }
+
+            appointment.appointmentStatus = AppointmentStatus.Cancelled;
+            appointment.updateAt = DateTime.UtcNow;
+            appointment.cancellationReason = request.Resone;
+
+            await db.Notifications.AddAsync(new Notification
+            {
+                UserId = patient.userId!.Value,
+                Type = NotificationType.Cancellation,
+                IsRead = false,
+                CreatedAt = DateTime.UtcNow,
+                Message = "الغاء موعد."
+            });
+
+            var nextWaiting = await db.Waitlists
+                    .Include(p => p.Patient)
+                    .Where(w => w.DoctorId == doctorId
+                           && w.PreferredDate == request.date
+                           && w.Status == WaitlistStatus.Waiting)
+                    .OrderBy(w => w.CreatedAt)
+                    .FirstOrDefaultAsync();
+
+            if (nextWaiting != null)
+            {
+                await db.Appointments.AddAsync(new Appointment
+                {
+                    patientId = nextWaiting.PatientId,
+                    appointmentDate = request.date,
+                    timeSlot = request.timeSlot,
+                    appointmentStatus = AppointmentStatus.Confirmed,
+                    doctorId = doctorId,
+                    createdAt = DateTime.UtcNow,
+                    updateAt = DateTime.UtcNow,
+                    ReceptionistId = userId
+                });
+                nextWaiting.Status = WaitlistStatus.Entered;
+
+
+                await db.Notifications.AddAsync(new Notification
+                {
+                    UserId = nextWaiting.Patient.NotifiableUserId,
+                    Type = NotificationType.Appointment,
+                    IsRead = false,
+                    CreatedAt = DateTime.UtcNow,
+                    Message = $"توفر لك موعد في تاريخ {request.date} في الوقت {request.timeSlot}"
+                });
+            }
+            await db.SaveChangesAsync();
+
+            return "تم الغاء موعدك بنجاح";
+        }
+
+        public async Task<BookAppointmentRespesponse> ReceptionistRescheduleAppointmentAsync(int centerId, int doctorId, int userId, ReceptionistRescheduleAppointmentRequest request)
+        {
+            var today = DateOnly.FromDateTime(DateTime.UtcNow);
+            if (request.date < today)
+                throw new BusinessException("Date.Invalid");
+
+            var center = await sharedDbContext.MedicalCenters
+                .Where(c => c.Id == centerId && c.CenterStatus == CenterStatus.Active)
+                .FirstOrDefaultAsync();
+
+            if (center == null)
+                throw new BusinessException("Center.NotFound");
+
+            using var db = contextFactory.CreateForCenter(centerId);
+
+            var receptionist = await db.Users
+                .FirstOrDefaultAsync(u => u.Id == userId
+                                     && u.isActive
+                                     && u.role == userRole.Receptionist);
+
+            if (receptionist == null)
+                throw new BusinessException("Receptionist.NotFound");
+
+            var patient = await db.Patients
+               .Include(p => p.user)
+               .FirstOrDefaultAsync(p => p.patientId == request.PatientId
+                                    && p.user.isActive);
+            if (patient == null)
+                throw new BusinessException("Patient.NotFound");
+
+            Patient actingPatient = patient;
+
+            if (request.SubPatientId.HasValue)
+            {
+                var subPatient = await db.Patients
+                    .FirstOrDefaultAsync(s => s.patientId == request.SubPatientId.Value
+                                         && s.ParentPatientId == patient.patientId);
+
+                if (subPatient == null)
+                    throw new BusinessException("SubPatient.NotFoundOrNotOwned");
+
+                actingPatient = subPatient;
+            }
+
+            var doctor = await db.Doctors
+                 .Include(u => u.user)
+                 .FirstOrDefaultAsync(d => d.Id == doctorId
+                                      && d.user.isActive);
+
+            if (doctor == null)
+                throw new BusinessException("Doctor.NotFound");
+
+            var appintment = await db.Appointments
+                .Include(p => p.Patient)
+                .Where(a => a.Id == request.appointmentId
+                       && a.doctorId == doctor.Id
+                       && a.patientId == actingPatient.patientId
+                       && a.appointmentStatus == AppointmentStatus.Confirmed)
+                .FirstOrDefaultAsync();
+
+            if (appintment == null)
+                throw new BusinessException("Appointment.NotFound");
+
+            var isWholeDayBlocked = await db.DoctorBlockedDays
+                .AnyAsync(bd => bd.doctorId == doctorId
+                          && bd.isBlocked
+                          && bd.date == request.date
+                          && bd.timeSlot == null);
+
+            if (isWholeDayBlocked)
+                throw new BusinessException("Doctor.DayBlocked");
+
+            var schedule = await db.DoctorSchedules
+               .Include(d => d.doctor)
+               .Where(d => d.DoctorId == doctorId
+                      && d.IsActive
+                      && d.DayOfWeek == request.date.DayOfWeek)
+               .FirstOrDefaultAsync();
+
+            if (schedule == null)
+                throw new BusinessException("Schedule.NotFound");
+
+            var theoreticalSlots = generateTheoreticalSlots.GenerateTheoreticalSlot(schedule.StartTime, schedule.EndTime, (int)schedule.SlotDurationMinutes);
+
+            var bookedSlots = await db.Appointments
+                 .Where(a => a.doctorId == doctorId
+                 && a.appointmentStatus == AppointmentStatus.Confirmed
+                 && a.appointmentDate == request.date)
+                .Select(a => a.timeSlot)
+                .ToListAsync();
+
+            var blockedSlots = await db.DoctorBlockedDays
+                .Where(bd => bd.doctorId == doctorId
+                 && bd.isBlocked
+                 && bd.date == request.date
+                 && bd.timeSlot.HasValue)
+                .Select(bd => bd.timeSlot!.Value)
+                .ToListAsync();
+
+            var availableSlots = theoreticalSlots
+                .Where(slot => slot.HasValue)
+                .Select(slot => slot!.Value)
+                .Except(bookedSlots.Where(b => b.HasValue).Select(b => b!.Value))
+                .Except(blockedSlots)
+                .ToList();
+
+            if (request.date == today)
+            {
+                var nowTime = TimeOnly.FromDateTime(DateTime.UtcNow);
+                availableSlots = availableSlots.Where(slot => slot > nowTime).ToList();
+            }
+
+            availableSlots = availableSlots.OrderBy(s => s).ToList();
+
+            if (!availableSlots.Contains(request.timeSlot))
+            {
+
+                return new BookAppointmentRespesponse
+                {
+                    Message = availableSlots.Any()
+                        ? "هذا الموعد محجوز، يمكنك اختيار موعد آخر!"
+                        : "لا يوجد مواعيد متاحة لهذا اليوم، يمكنك البقاء في موعدك الحالي.",
+                    Success = false,
+                    AlternativeSlots = availableSlots.Any() ? availableSlots : null
+                };
+
+            }
+            if (appintment.RescheduleCount >= 3)
+            {
+                return new BookAppointmentRespesponse
+                {
+                    Message = "لقد تجاوزت العدد المسموح به لإعادة جدولة موعدك!",
+                    Success = false,
+                    AlternativeSlots = null
+                };
+            }
+
+            var oldDate = appintment.appointmentDate;
+            var oldTimeSlot = appintment.timeSlot;
+
+            appintment.appointmentDate = request.date;
+            appintment.timeSlot = request.timeSlot;
+            appintment.RescheduleCount++;
+            appintment.updateAt = DateTime.UtcNow;
+
+            await db.Notifications.AddAsync(new Notification
+            {
+                UserId = patient.userId!.Value,
+                IsRead = false,
+                CreatedAt = DateTime.UtcNow,
+                Message = "تم اعادة جدولة موعدك بنجاح.",
+                Type = NotificationType.Appointment
+            });
+
+            await db.SaveChangesAsync();
+
+            return new BookAppointmentRespesponse
+            {
+                Message = "تم اعادة جدولة موعدك بنجاح.",
+                Success = true,
+                AlternativeSlots = null
+            };
         }
     }
 }
